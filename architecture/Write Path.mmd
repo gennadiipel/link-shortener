@@ -1,0 +1,27 @@
+sequenceDiagram
+  Actor User
+  participant Client
+  participant Nginx
+  participant Redis
+  participant NodeJS
+  participant PostgresDB
+
+  User->>Client: Enters target URL
+  Client->>Nginx: POST /links { targetUrl }
+  Nginx->>NodeJS: POST /links { targetUrl }
+  NodeJS->>NodeJS: Validate target URL
+
+  alt Valid target URL
+    NodeJS->>NodeJS: Generate short code abc
+    NodeJS->>PostgresDB: INSERT link abc -> target URL
+    PostgresDB-->>NodeJS: Created link
+    NodeJS-)Redis: SET url:abc Target URL
+    NodeJS-)Redis: SET opens:abc 0
+    NodeJS-->>Nginx: 201 Created /abc
+    Nginx-->>Client: 201 Created /abc
+    Client-->>User: Shows short link
+  else Invalid target URL
+    NodeJS-->>Nginx: 400 Bad Request
+    Nginx-->>Client: 400 Bad Request
+    Client-->>User: Shows validation error
+  end

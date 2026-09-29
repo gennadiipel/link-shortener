@@ -1,0 +1,44 @@
+sequenceDiagram
+  Actor User
+  participant Client
+  participant Nginx
+  participant Redis
+  participant NodeJS
+  participant PostgresDB
+
+  User->>Client: Opens a short link
+  Client->>Nginx: GET /abc
+  Nginx->>Redis: GET url:abc
+
+  opt Cache Hit
+    Redis-->>Nginx: Target URL
+    Nginx-)Redis: INCR opens:abc
+    Nginx-->>Client: 302 Redirect to Target URL
+  end
+
+  opt Cache Miss
+    Redis-->>Nginx: null
+    Nginx->>NodeJS: GET /abc
+    NodeJS->>PostgresDB: Query for target URL
+    PostgresDB-->>NodeJS: Target URL
+    NodeJS-)Redis: SET url:abc Target URL
+    NodeJS-)Redis: INCR opens:abc
+    NodeJS-->>Nginx: Target URL
+    Nginx-->>Client: 302 Redirect to Target URL
+  end
+  
+  opt Cache Miss, target URL not found
+    Redis-->>Nginx: null
+    Nginx->>NodeJS: GET /abc
+    NodeJS->>PostgresDB: Query for target URL
+    PostgresDB-->>NodeJS: null
+    NodeJS-->>Nginx: 404 Not Found
+    Nginx-->>Client: 404 Not Found
+  end
+
+  opt Bulk update counters in Postgres every 1 minute
+    NodeJS->>Redis: DECRBY opens:abc count
+    Redis-->>NodeJS: List of counters
+    NodeJS->>PostgresDB: Update counters in Postgres
+    PostgresDB-->>NodeJS: OK
+  end

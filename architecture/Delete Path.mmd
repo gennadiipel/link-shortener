@@ -1,0 +1,28 @@
+sequenceDiagram
+  Actor User
+  participant Client
+  participant Nginx
+  participant Redis
+  participant NodeJS
+  participant PostgresDB
+
+  User->>Client: Deletes short link abc
+  Client->>Nginx: DELETE /links/abc
+  Nginx->>NodeJS: DELETE /links/abc
+  NodeJS->>PostgresDB: DELETE link where code = abc
+
+  alt Link exists
+    PostgresDB-->>NodeJS: Deleted link
+    NodeJS-)Redis: DEL url:abc
+    NodeJS-)Redis: DEL opens:abc
+    NodeJS-->>Nginx: 204 No Content
+    Nginx-->>Client: 204 No Content
+    Client-->>User: Removes short link
+  else Link not found
+    PostgresDB-->>NodeJS: No matching link
+    NodeJS-)Redis: DEL url:abc
+    NodeJS-)Redis: DEL opens:abc
+    NodeJS-->>Nginx: 404 Not Found
+    Nginx-->>Client: 404 Not Found
+    Client-->>User: Shows not found state
+  end
