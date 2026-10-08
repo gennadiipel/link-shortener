@@ -1,4 +1,4 @@
-# Lapin AML link shortener project
+# Lapin AMK link shortener project
 
 This project is focused on building a web app for creating and serving short links like Bitly.
 
