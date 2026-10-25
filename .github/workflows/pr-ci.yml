@@ -55,3 +55,16 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: Start reverse-proxy stack
+        run: docker compose --env-file .env.dev up --build --wait
+
+      - name: Smoke test reverse proxy
+        run: |
+          curl --fail --show-error http://localhost:8080/api/hello
+          curl --fail --show-error http://localhost:8080/client/
+          curl --silent --show-error --dump-header - --output /dev/null http://localhost:8080/short-code | tr -d '\r' | grep --ignore-case '^location: https://www.google.com/$'
+
+      - name: Stop reverse-proxy stack
+        if: always()
+        run: docker compose --env-file .env.dev down --volumes --remove-orphans

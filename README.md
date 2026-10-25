@@ -19,7 +19,13 @@ A frontend part is a React app, which uses a Tailwind and tools from a Tanstack 
 
 ### Backend
 
-A backend part will be written in TS & Deno. Nginx will work as a reverse proxy and will also call Redis cache, which will ensure a very low latency.
+A backend part is written in TypeScript and runs on Bun with Fastify. Nginx works as the public reverse proxy; Redis cache lookup will be added in a later increment.
+
+### Local reverse proxy
+
+`bun run infra:up` starts the Docker Compose stack. Nginx is available on port
+`8080`: `/api/` proxies to the Bun API, `/client/` serves the React SPA, and
+other paths temporarily return a `302` redirect to Google.
 
 ### Data storage
 

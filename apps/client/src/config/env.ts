@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 const clientEnvSchema = z.object({
-  VITE_API_URL: z.url(),
+  VITE_API_URL: z.union([z.url(), z.literal("/api")]),
+  VITE_APP_BASE_PATH: z
+    .string()
+    .regex(/^\/.+\/$|^\/$/)
+    .default("/"),
 });
 
 const result = clientEnvSchema.safeParse(import.meta.env);
