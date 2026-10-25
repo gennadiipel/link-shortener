@@ -12,10 +12,12 @@
     "dev": "turbo run dev",
     "dev:api": "bun run --cwd apps/api dev",
     "dev:client": "bun run --cwd apps/client dev",
+    "dev:proxy": "turbo run dev:proxy",
     "env:setup": "bun scripts/env/setup.ts",
     "format": "biome format --write .",
     "infra:down": "docker compose --env-file .env.dev down",
-    "infra:up": "docker compose --env-file .env.dev up --build -d",
+    "infra:dev:up": "docker compose --env-file .env.dev --profile dev-proxy up -d",
+    "infra:up": "docker compose --env-file .env.dev --profile stack up --build -d",
     "lint": "turbo run lint",
     "test": "turbo run test"
   },

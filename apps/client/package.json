@@ -6,6 +6,7 @@
     "build": "vite build",
     "check": "tsc --noEmit",
     "dev": "vite --port 3000",
+    "dev:proxy": "VITE_API_URL=/api VITE_APP_BASE_PATH=/client/ vite --port 3000",
     "lint": "biome check .",
     "start": "vite preview --port 3000"
   },

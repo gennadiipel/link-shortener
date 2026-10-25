@@ -57,7 +57,7 @@ jobs:
         run: bun run build
 
       - name: Start reverse-proxy stack
-        run: docker compose --env-file .env.dev up --build --wait
+        run: docker compose --env-file .env.dev --profile stack up --build --wait
 
       - name: Smoke test reverse proxy
         run: |
@@ -67,4 +67,4 @@ jobs:
 
       - name: Stop reverse-proxy stack
         if: always()
-        run: docker compose --env-file .env.dev down --volumes --remove-orphans
+        run: docker compose --env-file .env.dev --profile stack down --volumes --remove-orphans

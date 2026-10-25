@@ -17,6 +17,21 @@ For direct application development without Nginx, use `bun run dev` or one of
 the app-specific development commands. The direct client runs at
 `http://localhost:3000/`; the proxied client runs below `/client/`.
 
+## Development with Nginx and hot reload
+
+Run the following in separate terminals:
+
+```sh
+bun run infra:dev:up
+bun run dev:proxy
+```
+
+The first command starts Postgres, Redis, and a lightweight Nginx development
+proxy. The second starts Vite and the Bun API watcher on the host. Open
+`http://localhost:8080/client/`: Vite handles client hot reload and Bun restarts
+the API after changes, while Nginx continues to route `/api/`, `/client/`, and
+short-link placeholder redirects. Stop infrastructure with `bun run infra:down`.
+
 ## Production
 
 Never commit `.env.prod`, credentials, or private keys. A future deployment
