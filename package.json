@@ -1,0 +1,25 @@
+{
+  "name": "link-shortener",
+  "private": true,
+  "packageManager": "bun@1.4.4",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "check": "turbo run check",
+    "dev": "turbo run dev",
+    "dev:api": "bun run --cwd apps/api dev",
+    "dev:client": "bun run --cwd apps/client dev",
+    "format": "biome format --write .",
+    "infra:down": "docker compose down",
+    "infra:up": "docker compose up -d",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
+    "turbo": "^2.8.10",
+    "typescript": "^5.9.3"
+  }
+}
