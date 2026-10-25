@@ -6,6 +6,7 @@
     "build": "bun build ./src/server.ts --outdir ./dist --target bun",
     "check": "tsc --noEmit",
     "dev": "bun --watch src/server.ts",
+    "dev:proxy": "CLIENT_ORIGIN=http://localhost:8080 bun --watch src/server.ts",
     "lint": "biome check .",
     "start": "bun dist/server.js",
     "test": "bun test"
