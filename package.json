@@ -11,9 +11,10 @@
     "dev": "turbo run dev",
     "dev:api": "bun run --cwd apps/api dev",
     "dev:client": "bun run --cwd apps/client dev",
+    "env:setup": "bun scripts/env/setup.ts",
     "format": "biome format --write .",
-    "infra:down": "docker compose down",
-    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose --env-file .env.dev down",
+    "infra:up": "docker compose --env-file .env.dev up -d",
     "lint": "turbo run lint",
     "test": "turbo run test"
   },

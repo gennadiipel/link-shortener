@@ -1,7 +1,17 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { createApp } from "../src/app";
+import { loadApiConfig } from "../src/config/env";
 
-const app = createApp();
+const app = createApp(
+  loadApiConfig({
+    API_PORT: "8000",
+    APP_ENV: "development",
+    CLIENT_ORIGIN: "http://localhost:3000",
+    DATABASE_URL:
+      "postgresql://link_shortener:link_shortener@localhost:5432/link_shortener",
+    REDIS_URL: "redis://localhost:6379",
+  }),
+);
 
 afterAll(async () => {
   await app.close();
