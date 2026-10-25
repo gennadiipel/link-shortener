@@ -1,4 +1,38 @@
 services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      API_PORT: "8000"
+      APP_ENV: ${APP_ENV:?APP_ENV must be set}
+      CLIENT_ORIGIN: http://localhost:8080
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const response = await fetch('http://127.0.0.1:8000/hello'); if (!response.ok) process.exit(1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nginx:
+    build:
+      args:
+        VITE_API_URL: /api
+        VITE_APP_BASE_PATH: /client/
+      context: .
+      dockerfile: nginx/Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
   postgres:
     image: postgres:16-alpine
     environment:
@@ -6,7 +40,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U link_shortener -d link_shortener"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10

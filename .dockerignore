@@ -1,0 +1,8 @@
+.env
+.env.*
+.git
+.turbo
+node_modules
+**/dist
+**/node_modules
+coverage
