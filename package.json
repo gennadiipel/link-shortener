@@ -7,7 +7,8 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "check": "turbo run check",
+    "check": "bun run check:scripts && turbo run check",
+    "check:scripts": "tsc --project tsconfig.scripts.json",
     "dev": "turbo run dev",
     "dev:api": "bun run --cwd apps/api dev",
     "dev:client": "bun run --cwd apps/client dev",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",
+    "@types/bun": "^1.4.4",
     "turbo": "^2.8.10",
     "typescript": "^5.9.3"
   }

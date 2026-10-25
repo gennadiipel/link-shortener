@@ -6,11 +6,15 @@ const examplePath = resolve(rootDirectory, ".env.example");
 const developmentEnvPath = resolve(rootDirectory, ".env.dev");
 const appDirectories = ["apps/api", "apps/client"];
 
+function hasErrorCode(error: unknown, code: string): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === code;
+}
+
 async function pathExists(path: string) {
   try {
     return await lstat(path);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+    if (hasErrorCode(error, "ENOENT")) {
       return undefined;
     }
 
