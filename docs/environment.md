@@ -32,6 +32,19 @@ proxy. The second starts Vite and the Bun API watcher on the host. Open
 the API after changes, while Nginx continues to route `/api/`, `/client/`, and
 short-link placeholder redirects. Stop infrastructure with `bun run infra:down`.
 
+## Database and operational CLI
+
+Apply pending database migrations before running database-backed commands:
+
+```sh
+bun run db:migrate
+bun run cli link:create https://example.com
+```
+
+The CLI is an extensible home for operational commands. The first command
+creates a persistent link in Postgres; it does not yet add the link to Redis or
+expose it through the HTTP API.
+
 ## Production
 
 Never commit `.env.prod`, credentials, or private keys. A future deployment

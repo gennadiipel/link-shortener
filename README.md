@@ -31,6 +31,18 @@ other paths temporarily return a `302` redirect to Google.
 
 Links will be persistently stored in Postgres and added to Redis cache. Redis cache will be also responsible for counting link opens for analytics. Every minute counters will be updated in Postgres.
 
+## Workspace packages
+
+Internal code is scoped under `@lapinamk-ls/*`. `@lapinamk-ls/domain` contains
+link business rules and repository ports, `@lapinamk-ls/database` contains
+Kysely/Postgres persistence and migrations, and `@lapinamk-ls/cli` contains
+operational commands. Create a link locally after starting infrastructure with:
+
+```sh
+bun run db:migrate
+bun run cli link:create https://example.com
+```
+
 ## Architecture diagrams
 
 ### Read path
