@@ -26,4 +26,4 @@ COPY --from=client-build /app/apps/client/dist/client /usr/share/nginx/html/clie
 
 EXPOSE 80
 
-HEALTHCHECK --interval=5s --timeout=5s --retries=10 CMD wget -q -O /dev/null http://localhost/client/ || exit 1
+HEALTHCHECK --interval=5s --timeout=5s --retries=10 CMD wget -q -O /dev/null http://127.0.0.1/client/ || exit 1
