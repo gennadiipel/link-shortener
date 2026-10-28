@@ -59,6 +59,12 @@ jobs:
       - name: Start reverse-proxy stack
         run: docker compose --env-file .env.dev --profile stack up --build --wait
 
+      - name: Migrate database and create a link
+        run: |
+          bun run db:migrate
+          bun run cli link:create https://example.com
+          docker compose --env-file .env.dev exec -T postgres psql -U link_shortener -d link_shortener -tAc "SELECT count(*) FROM links WHERE target_url = 'https://example.com/'" | grep '^1$'
+
       - name: Smoke test reverse proxy
         run: |
           curl --fail --show-error http://localhost:8080/api/hello
