@@ -14,10 +14,11 @@ export class KyselyLinkRepository implements LinkRepository {
       .insertInto("links")
       .values({
         code: link.code,
+        manager_code: link.managerCode,
         target_url: link.targetUrl,
       })
-      .onConflict((conflict) => conflict.column("code").doNothing())
-      .returning(["code", "target_url", "opens", "created_at"])
+      .onConflict((conflict) => conflict.doNothing())
+      .returning(["code", "target_url", "manager_code", "opens", "created_at"])
       .executeTakeFirst();
 
     if (!createdLink) {
@@ -27,6 +28,7 @@ export class KyselyLinkRepository implements LinkRepository {
     return {
       code: createdLink.code,
       createdAt: createdLink.created_at,
+      managerCode: createdLink.manager_code ?? link.managerCode,
       opens: createdLink.opens,
       targetUrl: createdLink.target_url,
     };

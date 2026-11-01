@@ -7,6 +7,7 @@ const validEnvironment = {
   CLIENT_ORIGIN: "http://localhost:3000",
   DATABASE_URL:
     "postgresql://link_shortener:link_shortener@localhost:5432/link_shortener",
+  PUBLIC_BASE_URL: "http://localhost:8080",
   REDIS_URL: "redis://localhost:6379",
 };
 
@@ -37,5 +38,8 @@ describe("API environment configuration", () => {
     expect(() =>
       loadApiConfig({ ...validEnvironment, DATABASE_URL: "not-a-url" }),
     ).toThrow("DATABASE_URL");
+    expect(() =>
+      loadApiConfig({ ...validEnvironment, PUBLIC_BASE_URL: "not-a-url" }),
+    ).toThrow("PUBLIC_BASE_URL");
   });
 });

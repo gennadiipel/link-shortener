@@ -1,6 +1,7 @@
 export type { CreateLinkDependencies } from "./create-link";
 export {
   createLink,
+  formatManagerCode,
   InvalidTargetUrlError,
   LinkCodeCollisionError,
 } from "./create-link";
