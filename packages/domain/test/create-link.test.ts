@@ -10,13 +10,18 @@ import type { CreateLinkRecord, LinkCache, LinkRepository } from "../src/link";
 function repositoryWith(
   create: (link: CreateLinkRecord) => ReturnType<LinkRepository["create"]>,
 ): LinkRepository {
-  return { create };
+  return { create, findByCode: async () => undefined };
 }
 
 function cacheWith(
   set: (link: Parameters<LinkCache["set"]>[0]) => Promise<void>,
 ): LinkCache {
-  return { set };
+  return {
+    getTargetUrl: async () => undefined,
+    incrementOpens: async () => {},
+    repair: async () => {},
+    set,
+  };
 }
 
 describe("createLink", () => {

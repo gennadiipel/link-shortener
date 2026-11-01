@@ -4,8 +4,14 @@ import { createHttpApp } from "../src/http/app";
 
 const linkRepository = {
   create: async () => undefined,
+  findByCode: async () => undefined,
 };
-const linkCache = { set: async () => {} };
+const linkCache = {
+  getTargetUrl: async () => undefined,
+  incrementOpens: async () => {},
+  repair: async () => {},
+  set: async () => {},
+};
 
 const app = createHttpApp(
   loadApiConfig({
