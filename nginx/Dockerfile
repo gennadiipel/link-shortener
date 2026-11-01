@@ -20,10 +20,21 @@ ENV VITE_APP_BASE_PATH=${VITE_APP_BASE_PATH}
 
 RUN bun run --cwd apps/client build
 
-FROM nginx:1.27-alpine
+FROM openresty/openresty:1.27.1.2-13-alpine-fat
 
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+ARG READ_PATH_MODE=openresty
+
+COPY nginx/default.conf /tmp/openresty.conf
+COPY nginx/bun-first.conf /tmp/bun-first.conf
+COPY nginx/nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
+COPY nginx/lua /etc/nginx/lua
 COPY --from=client-build /app/apps/client/dist/client /usr/share/nginx/html/client
+
+RUN case "$READ_PATH_MODE" in \
+      openresty) cp /tmp/openresty.conf /etc/nginx/conf.d/default.conf ;; \
+      bun) cp /tmp/bun-first.conf /etc/nginx/conf.d/default.conf ;; \
+      *) echo "Unsupported READ_PATH_MODE: $READ_PATH_MODE" >&2; exit 1 ;; \
+    esac
 
 EXPOSE 80
 

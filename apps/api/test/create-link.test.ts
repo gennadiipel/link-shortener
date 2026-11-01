@@ -15,8 +15,12 @@ const linkRepository: LinkRepository = {
       opens: 0,
     };
   },
+  findByCode: async () => undefined,
 };
 const linkCache = {
+  getTargetUrl: async () => undefined,
+  incrementOpens: async () => {},
+  repair: async () => {},
   set: async () => {
     if (cacheFails) {
       throw new Error("Redis unavailable");

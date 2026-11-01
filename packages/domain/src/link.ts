@@ -14,8 +14,12 @@ export interface CreateLinkRecord {
 
 export interface LinkRepository {
   create(link: CreateLinkRecord): Promise<Link | undefined>;
+  findByCode(code: string): Promise<Link | undefined>;
 }
 
 export interface LinkCache {
+  getTargetUrl(code: string): Promise<string | undefined>;
+  incrementOpens(code: string): Promise<void>;
+  repair(link: Link): Promise<void>;
   set(link: Link): Promise<void>;
 }

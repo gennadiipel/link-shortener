@@ -26,6 +26,7 @@ services:
     profiles: ["stack"]
     build:
       args:
+        READ_PATH_MODE: ${READ_PATH_MODE:-openresty}
         VITE_API_URL: /api
         VITE_APP_BASE_PATH: /client/
       context: .
@@ -37,14 +38,16 @@ services:
       - "8080:80"
 
   nginx-dev:
-    image: nginx:1.27-alpine
+    image: openresty/openresty:1.27.1.2-13-alpine-fat
     profiles: ["dev-proxy"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "8080:80"
     volumes:
-      - ./nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/${NGINX_DEV_CONFIG:-dev}.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./nginx/lua:/etc/nginx/lua:ro
 
   postgres:
     image: postgres:16-alpine

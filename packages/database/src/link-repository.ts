@@ -33,4 +33,24 @@ export class KyselyLinkRepository implements LinkRepository {
       targetUrl: createdLink.target_url,
     };
   }
+
+  async findByCode(code: string): Promise<Link | undefined> {
+    const link = await this.database
+      .selectFrom("links")
+      .select(["code", "target_url", "manager_code", "opens", "created_at"])
+      .where("code", "=", code)
+      .executeTakeFirst();
+
+    if (!link) {
+      return undefined;
+    }
+
+    return {
+      code: link.code,
+      createdAt: link.created_at,
+      managerCode: link.manager_code ?? "",
+      opens: link.opens,
+      targetUrl: link.target_url,
+    };
+  }
 }
