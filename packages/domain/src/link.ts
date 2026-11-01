@@ -15,3 +15,7 @@ export interface CreateLinkRecord {
 export interface LinkRepository {
   create(link: CreateLinkRecord): Promise<Link | undefined>;
 }
+
+export interface LinkCache {
+  set(link: Link): Promise<void>;
+}

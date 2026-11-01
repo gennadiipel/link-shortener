@@ -31,6 +31,12 @@ other paths temporarily return a `302` redirect to Google.
 
 Links will be persistently stored in Postgres and added to Redis cache. Redis cache will be also responsible for counting link opens for analytics. Every minute counters will be updated in Postgres.
 
+New links are written to Postgres first, then cached as `url:{code}` and
+`opens:{code}` in Redis. A temporary cache failure does not prevent creation;
+the future cache-miss read path will restore the cache from Postgres. That read
+path requires OpenResty/Lua or another Redis-capable Nginx build—stock Nginx
+does not query Redis directly.
+
 ## Workspace packages
 
 Internal code is scoped under `@lapinamk-ls/*`. `@lapinamk-ls/domain` contains

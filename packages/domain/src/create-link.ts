@@ -1,4 +1,4 @@
-import type { Link, LinkRepository } from "./link";
+import type { Link, LinkCache, LinkRepository } from "./link";
 
 const codeAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 const codeLength = 7;
@@ -23,7 +23,13 @@ export class LinkCodeCollisionError extends Error {
 export interface CreateLinkDependencies {
   generateCode?: () => string;
   generateManagerCode?: () => string;
+  linkCache: LinkCache;
   linkRepository: LinkRepository;
+}
+
+export interface CreateLinkResult {
+  cacheWritten: boolean;
+  link: Link;
 }
 
 function generateRandomCode(alphabet: string, length: number): string {
@@ -66,7 +72,7 @@ function normalizeTargetUrl(value: string): string {
 export async function createLink(
   targetUrlInput: string,
   dependencies: CreateLinkDependencies,
-): Promise<Link> {
+): Promise<CreateLinkResult> {
   const targetUrl = normalizeTargetUrl(targetUrlInput);
   const nextCode = dependencies.generateCode ?? generateCode;
   const nextManagerCode =
@@ -80,7 +86,13 @@ export async function createLink(
     });
 
     if (link) {
-      return link;
+      try {
+        await dependencies.linkCache.set(link);
+
+        return { cacheWritten: true, link };
+      } catch {
+        return { cacheWritten: false, link };
+      }
     }
   }
 

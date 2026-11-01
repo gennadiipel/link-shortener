@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import type { CreateLinkRecord, LinkRepository } from "@lapinamk-ls/domain";
-import { createApp } from "../src/app";
 import { loadApiConfig } from "../src/config/env";
+import { createHttpApp } from "../src/http/app";
 
 const createdRecords: CreateLinkRecord[] = [];
+let cacheFails = false;
 const linkRepository: LinkRepository = {
   create: async (record) => {
     createdRecords.push(record);
@@ -15,7 +16,14 @@ const linkRepository: LinkRepository = {
     };
   },
 };
-const app = createApp(
+const linkCache = {
+  set: async () => {
+    if (cacheFails) {
+      throw new Error("Redis unavailable");
+    }
+  },
+};
+const app = createHttpApp(
   loadApiConfig({
     API_PORT: "8000",
     APP_ENV: "development",
@@ -25,7 +33,7 @@ const app = createApp(
     PUBLIC_BASE_URL: "http://localhost:8080",
     REDIS_URL: "redis://localhost:6379",
   }),
-  { linkRepository },
+  { linkCache, linkRepository },
 );
 
 afterAll(async () => {
@@ -67,5 +75,20 @@ describe("POST /links", () => {
 
     expect(missingTarget.statusCode).toBe(400);
     expect(invalidTarget.statusCode).toBe(400);
+  });
+
+  test("creates the link when cache population fails", async () => {
+    cacheFails = true;
+
+    const response = await app.inject({
+      body: { targetUrl: "https://example.org" },
+      method: "POST",
+      url: "/links",
+    });
+
+    cacheFails = false;
+
+    expect(response.statusCode).toBe(201);
+    expect(createdRecords.at(-1)?.targetUrl).toBe("https://example.org/");
   });
 });
