@@ -20,9 +20,10 @@ ENV VITE_APP_BASE_PATH=${VITE_APP_BASE_PATH}
 
 RUN bun run --cwd apps/client build
 
-FROM nginx:1.27-alpine
+FROM openresty/openresty:1.27.1.2-13-alpine-fat
 
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/lua /etc/nginx/lua
 COPY --from=client-build /app/apps/client/dist/client /usr/share/nginx/html/client
 
 EXPOSE 80

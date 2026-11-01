@@ -19,30 +19,37 @@ A frontend part is a React app, which uses a Tailwind and tools from a Tanstack 
 
 ### Backend
 
-A backend part is written in TypeScript and runs on Bun with Fastify. Nginx works as the public reverse proxy; Redis cache lookup will be added in a later increment.
+A backend part is written in TypeScript and runs on Bun with Fastify. OpenResty is the public reverse proxy and resolves Redis cache hits before traffic reaches Bun.
 
 ### Local reverse proxy
 
-`bun run infra:up` starts the Docker Compose stack. Nginx is available on port
-`8080`: `/api/` proxies to the Bun API, `/client/` serves the React SPA, and
-other paths temporarily return a `302` redirect to Google.
+`bun run infra:up` starts the production-like Docker Compose stack. OpenResty
+is available on port `8080`: `/api/` proxies to the Bun API, `/client/` serves
+the React SPA, and a seven-character short code at `/{code}` is read from Redis
+and redirected directly. Cache misses and Redis outages fall back internally to
+the API, which resolves Postgres, repairs Redis, and returns either `302` or
+`404`. Other paths temporarily return a `302` redirect to Google.
+
+For hot reload, run `bun run infra:dev:up` once, then run `bun run dev`. The
+OpenResty development proxy continues to serve `http://localhost:8080`, while
+the API and client run from the host with file watching.
 
 ### Data storage
 
 Links will be persistently stored in Postgres and added to Redis cache. Redis cache will be also responsible for counting link opens for analytics. Every minute counters will be updated in Postgres.
 
 New links are written to Postgres first, then cached as `url:{code}` and
-`opens:{code}` in Redis. A temporary cache failure does not prevent creation;
-the future cache-miss read path will restore the cache from Postgres. That read
-path requires OpenResty/Lua or another Redis-capable Nginx build—stock Nginx
-does not query Redis directly.
+`opens:{code}` in Redis. OpenResty reads these keys on the redirect fast path;
+the API repairs missing entries from Postgres. A temporary cache failure does
+not prevent creation or resolution of a durable link.
 
 ## Workspace packages
 
 Internal code is scoped under `@lapinamk-ls/*`. `@lapinamk-ls/domain` contains
 link business rules and repository ports, `@lapinamk-ls/database` contains
-Kysely/Postgres persistence and migrations, and `@lapinamk-ls/cli` contains
-operational commands. Create a link locally after starting infrastructure with:
+Kysely/Postgres persistence and migrations, `@lapinamk-ls/cache` owns Redis
+key operations, and `@lapinamk-ls/cli` contains operational commands. Create a
+link locally after starting infrastructure with:
 
 ```sh
 bun run db:migrate
