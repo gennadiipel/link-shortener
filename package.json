@@ -22,6 +22,8 @@
     "infra:dev:up": "docker compose --env-file .env.dev --profile dev-proxy up -d",
     "infra:up": "docker compose --env-file .env.dev --profile stack up --build -d",
     "lint": "turbo run lint",
+    "load:read": "k6 run load/read-path.js",
+    "load:read:smoke": "READ_PATH_RATE=20 READ_PATH_DURATION=10s READ_PATH_PRE_ALLOCATED_VUS=5 READ_PATH_MAX_VUS=20 bun run load:read",
     "test": "turbo run test"
   },
   "devDependencies": {

@@ -34,6 +34,31 @@ For hot reload, run `bun run infra:dev:up` once, then run `bun run dev`. The
 OpenResty development proxy continues to serve `http://localhost:8080`, while
 the API and client run from the host with file watching.
 
+### Read-path load test
+
+The read-path k6 scenario creates and warms one short link, then measures only
+the OpenResty `302` response. It does not follow the destination URL, so remote
+site latency is excluded. Install [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/),
+start the production-like stack, migrate the database, then run:
+
+```sh
+bun run infra:up
+bun run db:migrate
+bun run load:read:smoke
+```
+
+`bun run load:read` defaults to 100 requests per second for 30 seconds. Tune it
+with environment variables such as `READ_PATH_RATE`, `READ_PATH_DURATION`,
+`READ_PATH_PRE_ALLOCATED_VUS`, and `READ_PATH_MAX_VUS`. Local Docker results
+are a development baseline only. To assess the architecture target of 50k RPS
+and p50 below 1 ms, use dedicated production-like infrastructure and one or
+more external load generators, for example:
+
+```sh
+READ_PATH_RATE=50000 READ_PATH_PRE_ALLOCATED_VUS=500 READ_PATH_MAX_VUS=5000 \
+READ_PATH_P50_MS=1 READ_PATH_P95_MS=5 bun run load:read
+```
+
 ### Data storage
 
 Links will be persistently stored in Postgres and added to Redis cache. Redis cache will be also responsible for counting link opens for analytics. Every minute counters will be updated in Postgres.
