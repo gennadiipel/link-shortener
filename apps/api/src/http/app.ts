@@ -10,7 +10,7 @@ export function createHttpApp(
   config: ApiConfig,
   dependencies: HttpDependencies,
 ) {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: { level: "warn" } });
 
   app.register(cors, { origin: config.CLIENT_ORIGIN });
   registerHealthRoute(app);

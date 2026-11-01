@@ -28,6 +28,29 @@ function cacheWith(overrides: Partial<LinkCache> = {}): LinkCache {
 }
 
 describe("resolveLink", () => {
+  test("returns a Redis hit without querying the database", async () => {
+    let databaseQueried = false;
+    const result = await resolveLink("abc1234", {
+      linkCache: cacheWith({
+        getTargetUrl: async () => "https://cached.example/",
+      }),
+      linkRepository: {
+        create: async () => undefined,
+        findByCode: async () => {
+          databaseQueried = true;
+          return link;
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      cacheUpdated: true,
+      source: "cache",
+      targetUrl: "https://cached.example/",
+    });
+    expect(databaseQueried).toBe(false);
+  });
+
   test("repairs the cache, increments opens, and returns a stored link", async () => {
     const calls: string[] = [];
     const result = await resolveLink("abc1234", {
@@ -42,7 +65,11 @@ describe("resolveLink", () => {
       linkRepository: repositoryWith(link),
     });
 
-    expect(result).toEqual({ cacheUpdated: true, link });
+    expect(result).toEqual({
+      cacheUpdated: true,
+      source: "database",
+      targetUrl: link.targetUrl,
+    });
     expect(calls).toEqual(["repair:abc1234", "increment:abc1234"]);
   });
 
@@ -57,7 +84,11 @@ describe("resolveLink", () => {
       linkRepository: repositoryWith(undefined),
     });
 
-    expect(result).toEqual({ cacheUpdated: false, link: undefined });
+    expect(result).toEqual({
+      cacheUpdated: false,
+      source: "not-found",
+      targetUrl: undefined,
+    });
     expect(cacheTouched).toBe(false);
   });
 
@@ -71,6 +102,10 @@ describe("resolveLink", () => {
       linkRepository: repositoryWith(link),
     });
 
-    expect(result).toEqual({ cacheUpdated: false, link });
+    expect(result).toEqual({
+      cacheUpdated: false,
+      source: "database",
+      targetUrl: link.targetUrl,
+    });
   });
 });
