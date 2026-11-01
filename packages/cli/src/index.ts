@@ -1,5 +1,5 @@
 import { createDatabase, KyselyLinkRepository } from "@lapinamk-ls/database";
-import { createLink } from "@lapinamk-ls/domain";
+import { createLink, formatManagerCode } from "@lapinamk-ls/domain";
 
 export interface CliOptions {
   databaseUrl: string;
@@ -23,6 +23,9 @@ export async function runCli(
     });
 
     console.log(`Created link ${link.code} -> ${link.targetUrl}`);
+    console.log(
+      `Manager code (shown once): ${formatManagerCode(link.managerCode)}`,
+    );
   } finally {
     await database.destroy();
   }

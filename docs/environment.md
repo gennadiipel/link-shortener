@@ -45,6 +45,11 @@ The CLI is an extensible home for operational commands. The first command
 creates a persistent link in Postgres; it does not yet add the link to Redis or
 expose it through the HTTP API.
 
+`PUBLIC_BASE_URL` is the public short-link origin used by the create-link API.
+For local Nginx it is `http://localhost:8080`; production must set it to the
+public HTTPS origin. When updating an existing `.env.dev`, add this value
+manually because `bun run env:setup` never overwrites local environment files.
+
 ## Production
 
 Never commit `.env.prod`, credentials, or private keys. A future deployment
@@ -52,7 +57,7 @@ workflow will read GitHub Actions Secrets and write `.env.prod` on the server
 with restrictive permissions. Required secret names are `DATABASE_URL` and
 `REDIS_URL`; use `POSTGRES_PASSWORD` too when Postgres is managed by Compose.
 
-`APP_ENV=production`, `API_PORT`, `CLIENT_ORIGIN`, `VITE_API_URL`, and
+`APP_ENV=production`, `API_PORT`, `CLIENT_ORIGIN`, `PUBLIC_BASE_URL`, `VITE_API_URL`, and
 `VITE_APP_BASE_PATH` are required deployment configuration. Both `VITE_`
 values are embedded in browser code and must never contain secrets.
 

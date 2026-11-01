@@ -65,6 +65,11 @@ jobs:
           bun run cli link:create https://example.com
           docker compose --env-file .env.dev exec -T postgres psql -U link_shortener -d link_shortener -tAc "SELECT count(*) FROM links WHERE target_url = 'https://example.com/'" | grep '^1$'
 
+      - name: Create a link through the API
+        run: |
+          curl --fail --silent --show-error --request POST http://localhost:8080/api/links --header 'content-type: application/json' --data '{"targetUrl":"https://example.net"}' | grep -E '"secretCode":"[A-HJ-KM-NP-Z2-9]{4}(-[A-HJ-KM-NP-Z2-9]{4}){3}".*"shortUrl":"http://localhost:8080/[a-z0-9]{7}"'
+          docker compose --env-file .env.dev exec -T postgres psql -U link_shortener -d link_shortener -tAc "SELECT count(*) FROM links WHERE target_url = 'https://example.net/' AND manager_code IS NOT NULL" | grep '^1$'
+
       - name: Smoke test reverse proxy
         run: |
           curl --fail --show-error http://localhost:8080/api/hello

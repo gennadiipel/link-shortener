@@ -43,6 +43,11 @@ bun run db:migrate
 bun run cli link:create https://example.com
 ```
 
+`POST /api/links` accepts `{ "targetUrl": "https://example.com" }` and returns
+the new public short URL plus a manager code. Store the manager code when it is
+returned: dashboard access will use it in a future increment, and ordinary API
+responses will not reveal it again.
+
 ## Architecture diagrams
 
 ### Read path

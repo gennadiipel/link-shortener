@@ -5,6 +5,7 @@ const apiEnvSchema = z.object({
   API_PORT: z.coerce.number().int().min(1).max(65535),
   CLIENT_ORIGIN: z.url(),
   DATABASE_URL: z.url(),
+  PUBLIC_BASE_URL: z.url(),
   REDIS_URL: z.url(),
 });
 

@@ -13,6 +13,7 @@ services:
       API_PORT: "8000"
       APP_ENV: ${APP_ENV:?APP_ENV must be set}
       CLIENT_ORIGIN: http://localhost:8080
+      PUBLIC_BASE_URL: http://localhost:8080
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
     healthcheck:
