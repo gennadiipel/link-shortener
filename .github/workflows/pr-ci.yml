@@ -78,6 +78,10 @@ jobs:
           printf '%s\n' "$redirect_headers" | grep -E '^HTTP/.* 302'
           printf '%s\n' "$redirect_headers" | grep '^Location: https://example.net/$'
           docker compose --env-file .env.dev exec -T redis redis-cli --raw GET "opens:$short_code" | grep '^1$'
+          # Clear OpenResty's in-process L1 before verifying the Redis-miss
+          # fallback path.
+          docker compose --env-file .env.dev restart nginx
+          docker compose --env-file .env.dev exec -T nginx wget -q -O /dev/null http://127.0.0.1/client/
           docker compose --env-file .env.dev exec -T redis redis-cli DEL "url:$short_code" | grep '^1$'
           curl --silent --show-error --dump-header - --output /dev/null "http://localhost:8080/$short_code" | tr -d '\r' | grep -E '^HTTP/.* 302'
           docker compose --env-file .env.dev exec -T redis redis-cli --raw GET "url:$short_code" | grep '^https://example.net/$'

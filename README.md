@@ -34,6 +34,13 @@ For hot reload, run `bun run infra:dev:up` once, then run `bun run dev`. The
 OpenResty development proxy continues to serve `http://localhost:8080`, while
 the API and client run from the host with file watching.
 
+For the Bun-first hot-reload comparison, use `bun run infra:dev:up:bun` before
+`bun run dev`. Switch between proxy modes with `bun run infra:down` first;
+both modes use port `8080`. Both proxy modes are configured for 8,192 worker
+connections, so high-concurrency local tests do not hit the stock OpenResty
+1,024-connection limit (a proxied request uses both a client and an upstream
+API connection).
+
 ### Read-path load test
 
 The read-path k6 scenario creates and warms one short link, then measures only
@@ -64,9 +71,22 @@ READ_PATH_P50_MS=1 READ_PATH_P95_MS=5 bun run load:read
 Links will be persistently stored in Postgres and added to Redis cache. Redis cache will be also responsible for counting link opens for analytics. Every minute counters will be updated in Postgres.
 
 New links are written to Postgres first, then cached as `url:{code}` and
-`opens:{code}` in Redis. OpenResty reads these keys on the redirect fast path;
-the API repairs missing entries from Postgres. A temporary cache failure does
-not prevent creation or resolution of a durable link.
+`opens:{code}` in Redis. OpenResty keeps hot immutable targets in a bounded
+shared-memory L1 cache. A cold L1 lookup atomically reads Redis and increments
+the Redis counter in one operation; L1 hits redirect without network I/O and
+aggregate counter increments for asynchronous Redis flushes. The counter is
+therefore eventually consistent, while Postgres remains the source of truth
+and the API repairs Redis misses. A temporary cache or analytics failure does
+not prevent resolution of a durable link.
+
+### Bun-first read-path comparison
+
+`bun run infra:up` uses the production-oriented OpenResty-first read path:
+OpenResty reads Redis and returns cache-hit redirects without invoking Bun. To
+compare it with a Bun-first path, run `bun run infra:up:bun` instead. That mode
+keeps the same OpenResty proxy, Redis, Postgres, and API containers, but routes
+every short-link request to Fastify. Fastify reads Redis first and performs the
+same Postgres cache-miss repair. Use the same k6 command for both modes.
 
 ## Workspace packages
 

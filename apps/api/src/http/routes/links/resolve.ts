@@ -13,7 +13,7 @@ export function registerResolveLinkRoute(
     async (request, reply) => {
       const result = await resolveLink(request.params.code, dependencies);
 
-      if (!result.link) {
+      if (!result.targetUrl) {
         return reply
           .header("cache-control", cacheControlHeader)
           .code(404)
@@ -22,14 +22,14 @@ export function registerResolveLinkRoute(
 
       if (!result.cacheUpdated) {
         request.log.warn(
-          { code: result.link.code },
+          { code: request.params.code },
           "Link resolved but Redis cache repair failed.",
         );
       }
 
       return reply
         .header("cache-control", cacheControlHeader)
-        .redirect(result.link.targetUrl, 302);
+        .redirect(result.targetUrl, 302);
     },
   );
 }
