@@ -15,6 +15,7 @@
       "name": "@lapinamk-ls/api",
       "dependencies": {
         "@fastify/cors": "^11.2.0",
+        "@lapinamk-ls/cache": "workspace:*",
         "@lapinamk-ls/cli": "workspace:*",
         "@lapinamk-ls/database": "workspace:*",
         "@lapinamk-ls/domain": "workspace:*",
@@ -43,9 +44,19 @@
         "vite": "^8.3.5",
       },
     },
+    "packages/cache": {
+      "name": "@lapinamk-ls/cache",
+      "dependencies": {
+        "@lapinamk-ls/domain": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+      },
+    },
     "packages/cli": {
       "name": "@lapinamk-ls/cli",
       "dependencies": {
+        "@lapinamk-ls/cache": "workspace:*",
         "@lapinamk-ls/database": "workspace:*",
         "@lapinamk-ls/domain": "workspace:*",
       },
@@ -154,6 +165,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@lapinamk-ls/api": ["@lapinamk-ls/api@workspace:apps/api"],
+
+    "@lapinamk-ls/cache": ["@lapinamk-ls/cache@workspace:packages/cache"],
 
     "@lapinamk-ls/cli": ["@lapinamk-ls/cli@workspace:packages/cli"],
 

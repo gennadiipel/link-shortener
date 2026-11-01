@@ -1,23 +1,15 @@
-import { createDatabase, KyselyLinkRepository } from "@lapinamk-ls/database";
-import { createApp } from "./app";
+import { createRuntime } from "./composition/runtime";
 import { loadApiConfig } from "./config/env";
 
-let database: ReturnType<typeof createDatabase> | undefined;
+let app: ReturnType<typeof createRuntime> | undefined;
 
 try {
   const config = loadApiConfig();
-  database = createDatabase(config.DATABASE_URL);
-  const app = createApp(config, {
-    linkRepository: new KyselyLinkRepository(database),
-  });
-
-  app.addHook("onClose", async () => {
-    await database?.destroy();
-  });
+  app = createRuntime(config);
 
   await app.listen({ host: "0.0.0.0", port: config.API_PORT });
 } catch (error) {
-  await database?.destroy();
+  await app?.close();
   console.error(error);
   process.exit(1);
 }

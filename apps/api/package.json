@@ -14,6 +14,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@lapinamk-ls/cache": "workspace:*",
     "@lapinamk-ls/cli": "workspace:*",
     "@lapinamk-ls/database": "workspace:*",
     "@lapinamk-ls/domain": "workspace:*",

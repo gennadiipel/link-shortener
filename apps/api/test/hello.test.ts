@@ -1,12 +1,13 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { createApp } from "../src/app";
 import { loadApiConfig } from "../src/config/env";
+import { createHttpApp } from "../src/http/app";
 
 const linkRepository = {
   create: async () => undefined,
 };
+const linkCache = { set: async () => {} };
 
-const app = createApp(
+const app = createHttpApp(
   loadApiConfig({
     API_PORT: "8000",
     APP_ENV: "development",
@@ -16,7 +17,7 @@ const app = createApp(
     PUBLIC_BASE_URL: "http://localhost:8080",
     REDIS_URL: "redis://localhost:6379",
   }),
-  { linkRepository },
+  { linkCache, linkRepository },
 );
 
 afterAll(async () => {

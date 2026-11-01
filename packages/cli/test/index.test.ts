@@ -6,6 +6,7 @@ describe("runCli", () => {
     await expect(
       runCli(["unknown"], {
         databaseUrl: "postgresql://user:password@localhost:5432/test",
+        redisUrl: "redis://localhost:6379",
       }),
     ).rejects.toThrow("Usage: bun run cli link:create <target-url>");
   });
