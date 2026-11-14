@@ -30,16 +30,15 @@ and redirected directly. Cache misses and Redis outages fall back internally to
 the API, which resolves Postgres, repairs Redis, and returns either `302` or
 `404`. Other paths temporarily return a `302` redirect to Google.
 
-For hot reload, run `bun run infra:dev:up` once, then run `bun run dev`. The
+For hot reload, run `bun run infra:dev:up` once, then run `bun run dev:proxy`. The
 OpenResty development proxy continues to serve `http://localhost:8080`, while
 the API and client run from the host with file watching.
 
-For the Bun-first hot-reload comparison, use `bun run infra:dev:up:bun` before
-`bun run dev`. Switch between proxy modes with `bun run infra:down` first;
-both modes use port `8080`. Both proxy modes are configured for 8,192 worker
-connections, so high-concurrency local tests do not hit the stock OpenResty
-1,024-connection limit (a proxied request uses both a client and an upstream
-API connection).
+The development proxy uses port `8080` and keeps the OpenResty read path.
+For API debugging, call `http://localhost:8000/links/{code}/redirect` directly
+while the Bun watcher is running. The proxy is configured for 8,192 worker
+connections so high-concurrency local tests do not hit the stock OpenResty
+1,024-connection limit.
 
 ### Read-path load test
 
@@ -81,15 +80,6 @@ The count is eventually consistent and best effort: proxy or Redis crashes can
 lose increments that have not reached durable storage. The API repairs Redis
 misses from Postgres, and a temporary cache or analytics failure does not
 prevent resolution of a durable link.
-
-### Bun-first read-path comparison
-
-`bun run infra:up` uses the production-oriented OpenResty-first read path:
-OpenResty reads Redis and returns cache-hit redirects without invoking Bun. To
-compare it with a Bun-first path, run `bun run infra:up:bun` instead. That mode
-keeps the same OpenResty proxy, Redis, Postgres, and API containers, but routes
-every short-link request to Fastify. Fastify reads Redis first and performs the
-same Postgres cache-miss repair. Use the same k6 command for both modes.
 
 ## Workspace packages
 
