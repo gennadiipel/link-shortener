@@ -34,7 +34,7 @@ describe("createLink", () => {
         ...record,
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         managerCode: record.managerCode,
-        opens: 0,
+        opens: 0n,
       })),
     });
 
@@ -44,7 +44,7 @@ describe("createLink", () => {
         code: "abc1234",
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         managerCode: "ABCDEFGHJKMNPQRS",
-        opens: 0,
+        opens: 0n,
         targetUrl: "https://example.com/",
       },
     });
@@ -70,7 +70,7 @@ describe("createLink", () => {
         attemptedCodes.push(record.code);
         return record.code === "abc1234"
           ? undefined
-          : { ...record, createdAt: new Date(), opens: 0 };
+          : { ...record, createdAt: new Date(), opens: 0n };
       }),
     });
 
@@ -90,7 +90,7 @@ describe("createLink", () => {
         attemptedManagerCodes.push(record.managerCode);
         return record.managerCode === "ABCDEFGHJKMNPQRS"
           ? undefined
-          : { ...record, createdAt: new Date(), opens: 0 };
+          : { ...record, createdAt: new Date(), opens: 0n };
       }),
     });
 
@@ -128,7 +128,7 @@ describe("createLink", () => {
       linkRepository: repositoryWith(async (record) => ({
         ...record,
         createdAt: new Date(),
-        opens: 0,
+        opens: 0n,
       })),
     });
 

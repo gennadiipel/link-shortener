@@ -1,44 +1,40 @@
 sequenceDiagram
-  Actor User
+  actor User
   participant Client
   participant Nginx
   participant Redis
-  participant NodeJS
-  participant PostgresDB
+  participant Bun
+  participant Postgres
 
   User->>Client: Opens a short link
-  Client->>Nginx: GET /abc
-  Nginx->>Redis: GET url:abc
+  Client->>Nginx: GET /abc1234
 
-  opt Cache Hit
+  opt OpenResty L1 hit
+    Nginx->>Nginx: Increment shared-memory opens
+    Nginx-->>Client: 302 Redirect
+  end
+
+  opt L1 miss, Redis hit
+    Nginx->>Redis: Atomic GET url and INCR opens
     Redis-->>Nginx: Target URL
-    Nginx-)Redis: INCR opens:abc
-    Nginx-->>Client: 302 Redirect to Target URL
+    Nginx-->>Client: 302 Redirect
   end
 
-  opt Cache Miss
-    Redis-->>Nginx: null
-    Nginx->>NodeJS: GET /abc
-    NodeJS->>PostgresDB: Query for target URL
-    PostgresDB-->>NodeJS: Target URL
-    NodeJS-)Redis: SET url:abc Target URL
-    NodeJS-)Redis: INCR opens:abc
-    NodeJS-->>Nginx: Target URL
-    Nginx-->>Client: 302 Redirect to Target URL
-  end
-  
-  opt Cache Miss, target URL not found
-    Redis-->>Nginx: null
-    Nginx->>NodeJS: GET /abc
-    NodeJS->>PostgresDB: Query for target URL
-    PostgresDB-->>NodeJS: null
-    NodeJS-->>Nginx: 404 Not Found
-    Nginx-->>Client: 404 Not Found
+  opt Redis miss or outage
+    Nginx->>Bun: Resolve short code
+    Bun->>Postgres: Query link
+    Postgres-->>Bun: Link or not found
+    Bun->>Redis: Repair cache and increment opens if available
+    Bun-->>Client: 302 Redirect or 404
   end
 
-  opt Bulk update counters in Postgres every 1 minute
-    NodeJS->>Redis: DECRBY opens:abc count
-    Redis-->>NodeJS: List of counters
-    NodeJS->>PostgresDB: Update counters in Postgres
-    PostgresDB-->>NodeJS: OK
+  opt Every second
+    Nginx-)Redis: INCRBY pending L1 opens
+  end
+
+  opt Sync counters to Postgres every 1 minute
+    Bun->>Redis: SCAN opens:* and MGET snapshots
+    Redis-->>Bun: Cumulative opens per code
+    Bun->>Postgres: SET opens = GREATEST(opens, snapshot)
+    Postgres-->>Bun: OK
   end

@@ -11,7 +11,7 @@ Nginx with `.env.dev`. The proxy is available at:
 
 - `http://localhost:8080/api/hello`
 - `http://localhost:8080/client/`
-- `http://localhost:8080/<short-code>` (temporarily redirects to Google)
+- `http://localhost:8080/<short-code>` (redirects a stored short link)
 
 For direct application development without Nginx, use `bun run dev` or one of
 the app-specific development commands. The direct client runs at
@@ -30,7 +30,7 @@ The first command starts Postgres, Redis, and a lightweight Nginx development
 proxy. The second starts Vite and the Bun API watcher on the host. Open
 `http://localhost:8080/client/`: Vite handles client hot reload and Bun restarts
 the API after changes, while Nginx continues to route `/api/`, `/client/`, and
-short-link placeholder redirects. Stop infrastructure with `bun run infra:down`.
+short-link redirects. Stop infrastructure with `bun run infra:down`.
 
 ## Database and operational CLI
 
@@ -41,9 +41,9 @@ bun run db:migrate
 bun run cli link:create https://example.com
 ```
 
-The CLI is an extensible home for operational commands. The first command
-creates a persistent link in Postgres; it does not yet add the link to Redis or
-expose it through the HTTP API.
+The CLI is an extensible home for operational commands. The link creation
+command writes to Postgres and Redis. The HTTP API also creates links with
+`POST /links`; the API syncs Redis open counts to Postgres every minute.
 
 `PUBLIC_BASE_URL` is the public short-link origin used by the create-link API.
 For local Nginx it is `http://localhost:8080`; production must set it to the

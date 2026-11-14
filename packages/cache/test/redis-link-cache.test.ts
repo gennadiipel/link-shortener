@@ -16,7 +16,7 @@ describe("RedisLinkCache", () => {
       code: "abc1234",
       createdAt: new Date(),
       managerCode: "ABCDEFGHJKMNPQRS",
-      opens: 0,
+      opens: 0n,
       targetUrl: "https://example.com/",
     });
 
@@ -45,7 +45,7 @@ describe("RedisLinkCache", () => {
       code: "abc1234",
       createdAt: new Date(),
       managerCode: "ABCDEFGHJKMNPQRS",
-      opens: 0,
+      opens: 0n,
       targetUrl: "https://example.com/",
     };
 
@@ -59,5 +59,26 @@ describe("RedisLinkCache", () => {
       "set:opens:abc1234:0:NX",
       "incr:opens:abc1234",
     ]);
+  });
+
+  test("repairs a missing counter from the durable count", async () => {
+    const writes: string[] = [];
+    const cache = new RedisLinkCache({
+      get: async () => null,
+      incr: async () => 1,
+      set: async (key, value, ...options) => {
+        writes.push(`${key}:${value}:${options.join(",")}`);
+      },
+    });
+
+    await cache.repair({
+      code: "abc1234",
+      createdAt: new Date(),
+      managerCode: "ABCDEFGHJKMNPQRS",
+      opens: 2147483648n,
+      targetUrl: "https://example.com/",
+    });
+
+    expect(writes).toContain("opens:abc1234:2147483648:NX");
   });
 });

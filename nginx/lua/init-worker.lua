@@ -5,6 +5,15 @@ local dirty_codes = ngx.shared.link_counter_dirty
 local flush_interval_seconds = 1
 local flush_batch_size = 2048
 
+local function clear_dirty_marker(code)
+  dirty_codes:delete(code)
+  -- A redirect may have incremented the counter just before the deletion.
+  -- Re-mark it if any work remains after the marker is removed.
+  if (counters:get(code) or 0) > 0 then
+    dirty_codes:set(code, true)
+  end
+end
+
 local function schedule_next_flush()
   local ok, err = ngx.timer.at(flush_interval_seconds, function(premature)
     if premature then
@@ -30,7 +39,10 @@ local function schedule_next_flush()
               -- New redirects that arrive while this is running remain in the
               -- shared counter after this subtraction and are flushed later.
               counters:incr(code, -count)
+              clear_dirty_marker(code)
             end
+          else
+            clear_dirty_marker(code)
           end
         end
 

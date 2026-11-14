@@ -16,7 +16,7 @@ if target_url then
   if counter_error then
     ngx.log(ngx.WARN, "In-process counter increment failed for code ", code, ": ", counter_error)
   else
-    local ok, dirty_error = dirty_codes:set(code, true, 5)
+    local ok, dirty_error = dirty_codes:set(code, true)
     if not ok then
       ngx.log(ngx.WARN, "Unable to mark counter dirty for code ", code, ": ", dirty_error)
     end

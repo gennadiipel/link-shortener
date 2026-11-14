@@ -1,7 +1,16 @@
-import { createRedisClient, RedisLinkCache } from "@lapinamk-ls/cache";
-import { createDatabase, KyselyLinkRepository } from "@lapinamk-ls/database";
+import {
+  createRedisClient,
+  RedisLinkCache,
+  RedisOpenCountReader,
+} from "@lapinamk-ls/cache";
+import {
+  createDatabase,
+  KyselyLinkRepository,
+  KyselyOpenCountRepository,
+} from "@lapinamk-ls/database";
 import type { ApiConfig } from "../config/env";
 import { createHttpApp } from "../http/app";
+import { startOpenCountFlush } from "./open-count-flush";
 
 export function createRuntime(config: ApiConfig) {
   const database = createDatabase(config.DATABASE_URL);
@@ -10,12 +19,21 @@ export function createRuntime(config: ApiConfig) {
     linkCache: new RedisLinkCache(redisClient),
     linkRepository: new KyselyLinkRepository(database),
   });
+  const stopOpenCountFlush = startOpenCountFlush(
+    new RedisOpenCountReader(redisClient),
+    new KyselyOpenCountRepository(database),
+    (error) => app.log.error({ err: error }, "Open-count flush failed"),
+  );
 
   app.addHook("onClose", async () => {
     try {
-      await database.destroy();
+      await stopOpenCountFlush();
     } finally {
-      redisClient.close();
+      try {
+        await database.destroy();
+      } finally {
+        redisClient.close();
+      }
     }
   });
 
