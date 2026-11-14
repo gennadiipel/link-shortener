@@ -7,7 +7,7 @@ const storedLink: Link = {
   code: "abc1234",
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   managerCode: "ABCDEFGHJKMNPQRS",
-  opens: 0,
+  opens: 0n,
   targetUrl: "https://example.com/",
 };
 let cacheFails = false;

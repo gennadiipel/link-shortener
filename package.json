@@ -18,7 +18,7 @@
     "dev:proxy": "turbo run dev:proxy",
     "env:setup": "bun scripts/env/setup.ts",
     "format": "biome format --write .",
-    "infra:down": "docker compose --env-file .env.dev down",
+    "infra:down": "docker compose --env-file .env.dev --profile stack --profile dev-proxy down",
     "infra:dev:up": "docker compose --env-file .env.dev --profile dev-proxy up -d",
     "infra:dev:up:bun": "NGINX_DEV_CONFIG=dev-bun-first docker compose --env-file .env.dev --profile dev-proxy up -d",
     "infra:up": "docker compose --env-file .env.dev --profile stack up --build -d",

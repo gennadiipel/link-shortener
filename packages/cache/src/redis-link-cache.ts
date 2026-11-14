@@ -25,7 +25,7 @@ export class RedisLinkCache implements LinkCache {
   async repair(link: Link): Promise<void> {
     await Promise.all([
       this.client.set(`url:${link.code}`, link.targetUrl),
-      this.client.set(`opens:${link.code}`, "0", "NX"),
+      this.client.set(`opens:${link.code}`, link.opens.toString(), "NX"),
     ]);
   }
 

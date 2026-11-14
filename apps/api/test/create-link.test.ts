@@ -12,7 +12,7 @@ const linkRepository: LinkRepository = {
     return {
       ...record,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
-      opens: 0,
+      opens: 0n,
     };
   },
   findByCode: async () => undefined,

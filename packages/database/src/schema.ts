@@ -4,7 +4,7 @@ export interface LinksTable {
   code: string;
   created_at: Generated<Date>;
   manager_code: string | null;
-  opens: Generated<number>;
+  opens: Generated<string>;
   target_url: string;
 }
 

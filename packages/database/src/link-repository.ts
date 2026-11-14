@@ -29,7 +29,7 @@ export class KyselyLinkRepository implements LinkRepository {
       code: createdLink.code,
       createdAt: createdLink.created_at,
       managerCode: createdLink.manager_code ?? link.managerCode,
-      opens: createdLink.opens,
+      opens: BigInt(createdLink.opens),
       targetUrl: createdLink.target_url,
     };
   }
@@ -49,7 +49,7 @@ export class KyselyLinkRepository implements LinkRepository {
       code: link.code,
       createdAt: link.created_at,
       managerCode: link.manager_code ?? "",
-      opens: link.opens,
+      opens: BigInt(link.opens),
       targetUrl: link.target_url,
     };
   }

@@ -74,10 +74,13 @@ New links are written to Postgres first, then cached as `url:{code}` and
 `opens:{code}` in Redis. OpenResty keeps hot immutable targets in a bounded
 shared-memory L1 cache. A cold L1 lookup atomically reads Redis and increments
 the Redis counter in one operation; L1 hits redirect without network I/O and
-aggregate counter increments for asynchronous Redis flushes. The counter is
-therefore eventually consistent, while Postgres remains the source of truth
-and the API repairs Redis misses. A temporary cache or analytics failure does
-not prevent resolution of a durable link.
+aggregate counter increments for asynchronous Redis flushes. Every minute the
+API scans cumulative Redis counters and raises Postgres counts to the latest
+snapshot. A failed update retries on the next pass without clearing Redis.
+The count is eventually consistent and best effort: proxy or Redis crashes can
+lose increments that have not reached durable storage. The API repairs Redis
+misses from Postgres, and a temporary cache or analytics failure does not
+prevent resolution of a durable link.
 
 ### Bun-first read-path comparison
 
@@ -112,48 +115,44 @@ responses will not reveal it again.
 
 ```mermaid
 sequenceDiagram
-  Actor User
+  actor User
   participant Client
   participant Nginx
   participant Redis
-  participant NodeJS
-  participant PostgresDB
+  participant Bun
+  participant Postgres
 
   User->>Client: Opens a short link
-  Client->>Nginx: GET /abc
-  Nginx->>Redis: GET url:abc
+  Client->>Nginx: GET /abc1234
 
-  opt Cache Hit
+  opt OpenResty L1 hit
+    Nginx->>Nginx: Increment shared-memory opens
+    Nginx-->>Client: 302 Redirect
+  end
+
+  opt L1 miss, Redis hit
+    Nginx->>Redis: Atomic GET url and INCR opens
     Redis-->>Nginx: Target URL
-    Nginx-)Redis: INCR opens:abc
-    Nginx-->>Client: 302 Redirect to Target URL
+    Nginx-->>Client: 302 Redirect
   end
 
-  opt Cache Miss
-    Redis-->>Nginx: null
-    Nginx->>NodeJS: GET /abc
-    NodeJS->>PostgresDB: Query for target URL
-    PostgresDB-->>NodeJS: Target URL
-    NodeJS-)Redis: SET url:abc Target URL
-    NodeJS-)Redis: INCR opens:abc
-    NodeJS-->>Nginx: Target URL
-    Nginx-->>Client: 302 Redirect to Target URL
+  opt Redis miss or outage
+    Nginx->>Bun: Resolve short code
+    Bun->>Postgres: Query link
+    Postgres-->>Bun: Link or not found
+    Bun->>Redis: Repair cache and increment opens if available
+    Bun-->>Client: 302 Redirect or 404
   end
 
-  opt Cache Miss, target URL not found
-    Redis-->>Nginx: null
-    Nginx->>NodeJS: GET /abc
-    NodeJS->>PostgresDB: Query for target URL
-    PostgresDB-->>NodeJS: null
-    NodeJS-->>Nginx: 404 Not Found
-    Nginx-->>Client: 404 Not Found
+  opt Every second
+    Nginx-)Redis: INCRBY pending L1 opens
   end
 
-  opt Bulk update counters in Postgres every 1 minute
-    NodeJS->>Redis: DECRBY opens:abc count
-    Redis-->>NodeJS: List of counters
-    NodeJS->>PostgresDB: Update counters in Postgres
-    PostgresDB-->>NodeJS: OK
+  opt Sync counters to Postgres every 1 minute
+    Bun->>Redis: SCAN opens:* and MGET snapshots
+    Redis-->>Bun: Cumulative opens per code
+    Bun->>Postgres: SET opens = GREATEST(opens, snapshot)
+    Postgres-->>Bun: OK
   end
 ```
 

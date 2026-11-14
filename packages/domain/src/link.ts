@@ -2,7 +2,7 @@ export interface Link {
   code: string;
   createdAt: Date;
   managerCode: string;
-  opens: number;
+  opens: bigint;
   targetUrl: string;
 }
 
