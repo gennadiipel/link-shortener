@@ -1,15 +1,13 @@
 import { InvalidTargetUrlError, normalizeTargetUrl } from "@lapinamk-ls/domain";
 import { useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { createHttpClient } from "../../api/http-client";
 import { clientEnv } from "../../config/env";
 import { CreateLinkError, createShortLink } from "./api/create-link";
+import { dashboardLocation } from "./dashboard-location";
 import {
   type StoredCreatedLink,
   saveCreatedLink,
 } from "./storage/created-link";
-
-const httpClient = createHttpClient(clientEnv.VITE_API_URL);
 
 function validateTargetUrl(value: string) {
   if (!value.trim()) {
@@ -76,7 +74,7 @@ export function useCreateLink() {
 
         try {
           const response = await createShortLink(
-            httpClient,
+            clientEnv.VITE_API_URL,
             validated.targetUrl,
           );
           result = { ...response, targetUrl: validated.targetUrl };
@@ -103,7 +101,7 @@ export function useCreateLink() {
       }
 
       try {
-        await navigate({ to: "/dashboard" });
+        await navigate(dashboardLocation(result.shortUrl, result.secretCode));
       } catch {
         setSubmitError(
           "Your link was created and saved. Try continuing to the dashboard again.",

@@ -4,7 +4,9 @@ export {
   formatManagerCode,
   LinkCodeCollisionError,
 } from "./create-link";
+export { getManagedLink } from "./get-managed-link";
 export type { CreateLinkRecord, Link, LinkCache, LinkRepository } from "./link";
+export { isLinkCode, normalizeManagerCode } from "./link-credentials";
 export type {
   ResolveLinkDependencies,
   ResolveLinkResult,

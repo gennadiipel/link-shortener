@@ -1,9 +1,10 @@
+import { normalizeManagerCode } from "@lapinamk-ls/domain";
 import { z } from "zod";
-import { type HttpClient, HttpError } from "../../../api/http-client";
+import { parseShortLinkCode } from "../dashboard-location";
 
 const createdLinkSchema = z.object({
-  shortUrl: z.url(),
-  secretCode: z.string().min(1),
+  shortUrl: z.url().refine((value) => !!parseShortLinkCode(value)),
+  secretCode: z.string().refine((value) => !!normalizeManagerCode(value)),
 });
 
 export type CreatedLink = z.infer<typeof createdLinkSchema>;
@@ -16,36 +17,34 @@ export class CreateLinkError extends Error {
 }
 
 export async function createShortLink(
-  client: HttpClient,
+  baseUrl: string,
   targetUrl: string,
+  fetchRequest: (url: string, init: RequestInit) => Promise<Response> = fetch,
 ): Promise<CreatedLink> {
-  let body: unknown;
-
+  let response: Response;
   try {
-    body = await client.post("/links", { targetUrl });
-  } catch (error) {
-    if (error instanceof HttpError) {
-      throw new CreateLinkError(
-        error.status === 400
-          ? "The service could not accept this URL. Check it and try again."
-          : "Could not shorten the link. Please try again.",
-      );
-    }
-
+    response = await fetchRequest(`${baseUrl.replace(/\/+$/, "")}/links`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetUrl }),
+    });
+  } catch {
     throw new CreateLinkError(
-      error instanceof SyntaxError
-        ? "The service returned an invalid response. Please try again."
-        : "Could not reach the link service. Please try again.",
+      "Could not reach the link service. Please try again.",
     );
   }
-
-  const result = createdLinkSchema.safeParse(body);
-
-  if (!result.success) {
+  if (!response.ok) {
+    throw new CreateLinkError(
+      response.status === 400
+        ? "The service could not accept this URL. Check it and try again."
+        : "Could not shorten the link. Please try again.",
+    );
+  }
+  try {
+    return createdLinkSchema.parse(await response.json());
+  } catch {
     throw new CreateLinkError(
       "The service returned an invalid response. Please try again.",
     );
   }
-
-  return result.data;
 }

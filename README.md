@@ -111,8 +111,17 @@ make delete commands fail so they can be retried.
 
 `POST /api/links` accepts `{ "targetUrl": "https://example.com" }` and returns
 the new public short URL plus a manager code. Store the manager code when it is
-returned: dashboard access will use it in a future increment, and ordinary API
-responses will not reveal it again.
+returned: the client saves the result in session storage and opens
+`/dashboard/<short-code>?secretCode=<private-edit-code>` (under `/client/` when
+using the proxy). Both manage-link forms open this same route.
+
+`GET /api/links/<short-code>/dashboard?secretCode=<private-edit-code>` checks the credentials
+against a non-deleted Postgres link and returns `{ shortUrl, targetUrl, opens }`.
+The opens count is a decimal string containing the latest persisted snapshot.
+This request does not count as a link open or access Redis. Invalid credentials
+and missing links return the same `404`; dashboard navigation then returns to
+the home page. Responses use `Cache-Control: no-store` and do not include the
+private edit code. Service failures leave a retryable dashboard error.
 
 ## Architecture diagrams
 
