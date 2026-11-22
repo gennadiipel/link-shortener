@@ -1,17 +1,11 @@
 import type { Link, LinkCache, LinkRepository } from "./link";
+import { normalizeTargetUrl } from "./target-url";
 
 const codeAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 const codeLength = 7;
 const managerCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const managerCodeLength = 16;
 const maximumCreateAttempts = 5;
-
-export class InvalidTargetUrlError extends Error {
-  constructor() {
-    super("Target URL must be an absolute HTTP or HTTPS URL.");
-    this.name = "InvalidTargetUrlError";
-  }
-}
 
 export class LinkCodeCollisionError extends Error {
   constructor() {
@@ -51,22 +45,6 @@ function generateManagerCode(): string {
 
 export function formatManagerCode(managerCode: string): string {
   return managerCode.match(/.{1,4}/g)?.join("-") ?? managerCode;
-}
-
-function normalizeTargetUrl(value: string): string {
-  let targetUrl: URL;
-
-  try {
-    targetUrl = new URL(value);
-  } catch {
-    throw new InvalidTargetUrlError();
-  }
-
-  if (targetUrl.protocol !== "http:" && targetUrl.protocol !== "https:") {
-    throw new InvalidTargetUrlError();
-  }
-
-  return targetUrl.toString();
 }
 
 export async function createLink(

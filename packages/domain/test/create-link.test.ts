@@ -4,7 +4,7 @@ import {
   formatManagerCode,
   InvalidTargetUrlError,
   LinkCodeCollisionError,
-} from "../src/create-link";
+} from "../src/index";
 import type { CreateLinkRecord, LinkCache, LinkRepository } from "../src/link";
 
 function repositoryWith(

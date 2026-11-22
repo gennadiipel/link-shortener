@@ -4,6 +4,7 @@ type TextFieldProps = ComponentProps<"input"> & {
   label: string;
   hideLabel?: boolean;
   containerClassName?: string;
+  error?: string | null;
 };
 
 export function TextField({
@@ -12,10 +13,13 @@ export function TextField({
   containerClassName = "",
   className = "",
   id,
+  error,
+  "aria-describedby": describedBy,
   ...props
 }: TextFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
+  const errorId = `${inputId}-error`;
 
   return (
     <div className={`flex min-w-0 flex-col gap-1.5 ${containerClassName}`}>
@@ -30,8 +34,22 @@ export function TextField({
       <input
         {...props}
         id={inputId}
-        className={`h-13 w-full min-w-0 rounded-[10px] border border-outline bg-white px-4 text-sm leading-normal text-ink placeholder:text-muted focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${className}`}
+        aria-describedby={
+          [describedBy, error ? errorId : null].filter(Boolean).join(" ") ||
+          undefined
+        }
+        aria-invalid={error ? true : props["aria-invalid"]}
+        className={`h-13 w-full min-w-0 rounded-[10px] border border-outline bg-white px-4 text-sm leading-normal text-ink placeholder:text-muted focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary aria-invalid:border-danger aria-invalid:focus-visible:border-danger aria-invalid:focus-visible:outline-danger ${className}`}
       />
+      {error && (
+        <p
+          id={errorId}
+          role="alert"
+          className="text-sm leading-normal text-danger"
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
