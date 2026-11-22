@@ -3,10 +3,13 @@ import { loadApiConfig } from "../src/config/env";
 import { createHttpApp } from "../src/http/app";
 
 const linkRepository = {
+  softDelete: async () => false,
   create: async () => undefined,
   findByCode: async () => undefined,
 };
 const linkCache = {
+  getOpens: async () => undefined,
+  clear: async () => {},
   getTargetUrl: async () => undefined,
   incrementOpens: async () => {},
   repair: async () => {},

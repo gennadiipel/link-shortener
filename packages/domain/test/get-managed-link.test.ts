@@ -11,13 +11,27 @@ const link: Link = {
   managerCode: "ABCDEFGHJKMNPQRS",
   targetUrl: "https://example.com/",
   opens: 9007199254740993n,
+  isDeleted: false,
   createdAt: new Date(),
 };
 function repository(value: Link | undefined): LinkRepository {
-  return { create: async () => undefined, findByCode: async () => value };
+  return {
+    softDelete: async () => false,
+    create: async () => undefined,
+    findByCode: async () => value,
+  };
 }
 
 describe("managed link access", () => {
+  test("can authorize a deleted row for a read-only dashboard", async () => {
+    const deleted = { ...link, isDeleted: true };
+    const linkRepository = repository(deleted);
+    linkRepository.findByCode = async (_code, options) =>
+      options?.includeDeleted ? deleted : undefined;
+    expect(
+      await getManagedLink(link.code, link.managerCode, { linkRepository }),
+    ).toBe(deleted);
+  });
   test("accepts formatted or unformatted credentials after normalization", async () => {
     expect(normalizeManagerCode("  abcd-efgh-jkmn-pqrs ")).toBe(
       link.managerCode,
@@ -35,7 +49,7 @@ describe("managed link access", () => {
       }),
     ).toBeUndefined();
   });
-  test("rejects absent or deleted links", async () => {
+  test("rejects absent links", async () => {
     expect(
       await getManagedLink(link.code, link.managerCode, {
         linkRepository: repository(undefined),
@@ -51,6 +65,7 @@ describe("managed link access", () => {
   });
   test("does not read storage for malformed credentials", async () => {
     const linkRepository: LinkRepository = {
+      softDelete: async () => false,
       create: async () => undefined,
       findByCode: async () => {
         throw new Error("Unexpected database access");
@@ -70,6 +85,7 @@ describe("managed link access", () => {
   });
   test("propagates database outages instead of treating them as invalid access", async () => {
     const linkRepository: LinkRepository = {
+      softDelete: async () => false,
       create: async () => undefined,
       findByCode: async () => {
         throw new Error("Database unavailable");

@@ -18,7 +18,14 @@ export class KyselyLinkRepository implements LinkRepository {
         target_url: link.targetUrl,
       })
       .onConflict((conflict) => conflict.doNothing())
-      .returning(["code", "target_url", "manager_code", "opens", "created_at"])
+      .returning([
+        "code",
+        "target_url",
+        "manager_code",
+        "opens",
+        "created_at",
+        "is_deleted",
+      ])
       .executeTakeFirst();
 
     if (!createdLink) {
@@ -31,16 +38,27 @@ export class KyselyLinkRepository implements LinkRepository {
       managerCode: createdLink.manager_code ?? link.managerCode,
       opens: BigInt(createdLink.opens),
       targetUrl: createdLink.target_url,
+      isDeleted: createdLink.is_deleted,
     };
   }
 
-  async findByCode(code: string): Promise<Link | undefined> {
-    const link = await this.database
+  async findByCode(
+    code: string,
+    options: { includeDeleted?: boolean } = {},
+  ): Promise<Link | undefined> {
+    let query = this.database
       .selectFrom("links")
-      .select(["code", "target_url", "manager_code", "opens", "created_at"])
-      .where("code", "=", code)
-      .where("is_deleted", "=", false)
-      .executeTakeFirst();
+      .select([
+        "code",
+        "target_url",
+        "manager_code",
+        "opens",
+        "created_at",
+        "is_deleted",
+      ])
+      .where("code", "=", code);
+    if (!options.includeDeleted) query = query.where("is_deleted", "=", false);
+    const link = await query.executeTakeFirst();
 
     if (!link) {
       return undefined;
@@ -52,6 +70,7 @@ export class KyselyLinkRepository implements LinkRepository {
       managerCode: link.manager_code ?? "",
       opens: BigInt(link.opens),
       targetUrl: link.target_url,
+      isDeleted: link.is_deleted,
     };
   }
 

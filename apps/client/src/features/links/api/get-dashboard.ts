@@ -4,6 +4,7 @@ const dashboardSchema = z.object({
   shortUrl: z.url(),
   targetUrl: z.url(),
   opens: z.string().regex(/^\d+$/),
+  isDeleted: z.boolean(),
 });
 export type LinkDashboard = z.infer<typeof dashboardSchema>;
 

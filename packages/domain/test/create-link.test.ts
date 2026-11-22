@@ -10,13 +10,19 @@ import type { CreateLinkRecord, LinkCache, LinkRepository } from "../src/link";
 function repositoryWith(
   create: (link: CreateLinkRecord) => ReturnType<LinkRepository["create"]>,
 ): LinkRepository {
-  return { create, findByCode: async () => undefined };
+  return {
+    softDelete: async () => false,
+    create,
+    findByCode: async () => undefined,
+  };
 }
 
 function cacheWith(
   set: (link: Parameters<LinkCache["set"]>[0]) => Promise<void>,
 ): LinkCache {
   return {
+    getOpens: async () => undefined,
+    clear: async () => {},
     getTargetUrl: async () => undefined,
     incrementOpens: async () => {},
     repair: async () => {},
@@ -35,6 +41,7 @@ describe("createLink", () => {
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         managerCode: record.managerCode,
         opens: 0n,
+        isDeleted: false,
       })),
     });
 
@@ -45,6 +52,7 @@ describe("createLink", () => {
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         managerCode: "ABCDEFGHJKMNPQRS",
         opens: 0n,
+        isDeleted: false,
         targetUrl: "https://example.com/",
       },
     });
@@ -70,7 +78,7 @@ describe("createLink", () => {
         attemptedCodes.push(record.code);
         return record.code === "abc1234"
           ? undefined
-          : { ...record, createdAt: new Date(), opens: 0n };
+          : { ...record, createdAt: new Date(), opens: 0n, isDeleted: false };
       }),
     });
 
@@ -90,7 +98,7 @@ describe("createLink", () => {
         attemptedManagerCodes.push(record.managerCode);
         return record.managerCode === "ABCDEFGHJKMNPQRS"
           ? undefined
-          : { ...record, createdAt: new Date(), opens: 0n };
+          : { ...record, createdAt: new Date(), opens: 0n, isDeleted: false };
       }),
     });
 
@@ -129,6 +137,7 @@ describe("createLink", () => {
         ...record,
         createdAt: new Date(),
         opens: 0n,
+        isDeleted: false,
       })),
     });
 

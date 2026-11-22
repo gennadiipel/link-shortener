@@ -8,6 +8,7 @@ const storedLink: Link = {
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   managerCode: "ABCDEFGHJKMNPQRS",
   opens: 0n,
+  isDeleted: false,
   targetUrl: "https://example.com/",
 };
 let cacheFails = false;
@@ -16,10 +17,13 @@ const repairedCodes: string[] = [];
 const incrementedCodes: string[] = [];
 
 const linkRepository: LinkRepository = {
+  softDelete: async () => false,
   create: async () => undefined,
   findByCode: async () => foundLink,
 };
 const linkCache: LinkCache = {
+  getOpens: async () => undefined,
+  clear: async () => {},
   getTargetUrl: async () => undefined,
   incrementOpens: async (code) => {
     if (cacheFails) {

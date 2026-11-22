@@ -9,6 +9,8 @@ export async function getManagedLink(
   const managerCode = normalizeManagerCode(secretCode);
   if (!isLinkCode(code) || !managerCode) return undefined;
 
-  const link = await dependencies.linkRepository.findByCode(code);
+  const link = await dependencies.linkRepository.findByCode(code, {
+    includeDeleted: true,
+  });
   return link?.managerCode === managerCode ? link : undefined;
 }

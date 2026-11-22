@@ -12,4 +12,5 @@ export type {
   ResolveLinkResult,
 } from "./resolve-link";
 export { resolveLink } from "./resolve-link";
+export { softDeleteManagedLink } from "./soft-delete-link";
 export { InvalidTargetUrlError, normalizeTargetUrl } from "./target-url";

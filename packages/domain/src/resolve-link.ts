@@ -29,7 +29,7 @@ export async function resolveLink(
 
   const link = await dependencies.linkRepository.findByCode(code);
 
-  if (!link) {
+  if (!link || link.isDeleted) {
     return { cacheUpdated: false, source: "not-found", targetUrl: undefined };
   }
 

@@ -1,14 +1,17 @@
 import { Button } from "../../components/ui/button";
+import { CopyButton } from "../../components/ui/copy-button";
 import { FormCard } from "../../components/ui/form-card";
 import { MetricCard } from "../../components/ui/metric-card";
 import { TextField } from "../../components/ui/text-field";
 import { PrivateEditCodeCard } from "./private-edit-code-card";
+import { useDeleteLink } from "./use-delete-link";
 
 type LinkDetailsCardProps = {
   totalClicks: string | number;
   shortUrl: string;
   destinationUrl: string;
   editCode: string;
+  isDeleted: boolean;
 };
 
 export function LinkDetailsCard({
@@ -16,11 +19,17 @@ export function LinkDetailsCard({
   shortUrl,
   destinationUrl,
   editCode,
+  isDeleted,
 }: LinkDetailsCardProps) {
+  const deletion = useDeleteLink(shortUrl, editCode, isDeleted);
   return (
     <FormCard
       title="Link details"
-      description="Everything you need to review, copy, and manage this shortened link."
+      description={
+        isDeleted
+          ? "Saved information for this deleted link. Copying is still available."
+          : "Everything you need to review, copy, and manage this shortened link."
+      }
       className="gap-5"
     >
       <dl className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-3">
@@ -49,14 +58,27 @@ export function LinkDetailsCard({
           readOnly
           containerClassName="sm:flex-1"
         />
-        <Button variant="secondary" aria-disabled="true">
-          Copy
-        </Button>
-        <Button variant="secondary" aria-disabled="true">
-          Delete
+        <CopyButton key={shortUrl} value={shortUrl} label="Copy" />
+        <Button
+          variant="secondary"
+          disabled={isDeleted || deletion.isPending}
+          onClick={() => {
+            void deletion.remove();
+          }}
+        >
+          {isDeleted ? "Deleted" : deletion.isPending ? "Deleting…" : "Delete"}
         </Button>
       </div>
-      <PrivateEditCodeCard code={editCode} shortUrl={shortUrl} />
+      {deletion.error && (
+        <p role="alert" className="text-sm text-danger">
+          {deletion.error}
+        </p>
+      )}
+      <PrivateEditCodeCard
+        code={editCode}
+        shortUrl={shortUrl}
+        isDeleted={isDeleted}
+      />
     </FormCard>
   );
 }

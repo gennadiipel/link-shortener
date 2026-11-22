@@ -2,6 +2,7 @@ import type { Link, LinkCache } from "@lapinamk-ls/domain";
 import { RedisClient } from "bun";
 
 export interface RedisClientLike {
+  del(...keys: string[]): Promise<number>;
   get(key: string): Promise<string | null>;
   incr(key: string): Promise<number>;
   set(key: string, value: string, ...options: string[]): Promise<unknown>;
@@ -20,6 +21,15 @@ export async function clearLinkCache(
 
 export class RedisLinkCache implements LinkCache {
   constructor(private readonly client: RedisClientLike) {}
+
+  async getOpens(code: string): Promise<bigint | undefined> {
+    const value = await this.client.get(`opens:${code}`);
+    return value === null ? undefined : BigInt(value);
+  }
+
+  async clear(code: string): Promise<void> {
+    await clearLinkCache(this.client, code);
+  }
 
   async getTargetUrl(code: string): Promise<string | undefined> {
     return (await this.client.get(`url:${code}`)) ?? undefined;

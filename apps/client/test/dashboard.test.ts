@@ -38,6 +38,7 @@ describe("dashboard navigation", () => {
         shortUrl: "https://short.example/abc1234",
         targetUrl: "https://example.com/",
         opens: "9007199254740993",
+        isDeleted: false,
       };
       expect(
         await getDashboard(baseUrl, "abc1234", "ABCDEFGHJKMNPQRS", {
