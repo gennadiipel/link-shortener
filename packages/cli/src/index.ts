@@ -1,42 +1,44 @@
-import { createRedisClient, RedisLinkCache } from "@lapinamk-ls/cache";
-import { createDatabase, KyselyLinkRepository } from "@lapinamk-ls/database";
-import { createLink, formatManagerCode } from "@lapinamk-ls/domain";
+import { clearCache } from "./operations/cache-clear";
+import { createLinkCommand } from "./operations/link-create";
+import { hardDeleteLink } from "./operations/link-delete";
+import { softDeleteLink } from "./operations/link-soft-delete";
+import type { CliOptions } from "./types";
 
-export interface CliOptions {
-  databaseUrl: string;
-  redisUrl: string;
-}
+export type { CliOptions } from "./types";
+
+const codePattern = /^[a-z0-9]{7}$/;
+const usage = [
+  "Usage:",
+  "  bun run cli link:create <target-url>",
+  "  bun run cli link:delete <code>",
+  "  bun run cli link:soft-delete <code>",
+  "  bun run cli cache:clear <code>",
+].join("\n");
 
 export async function runCli(
   arguments_: string[],
   options: CliOptions,
 ): Promise<void> {
-  const [command, targetUrl, ...extraArguments] = arguments_;
+  const [command, argument, ...extraArguments] = arguments_;
+  if (!argument || extraArguments.length > 0) throw new Error(usage);
 
-  if (command !== "link:create" || !targetUrl || extraArguments.length > 0) {
-    throw new Error("Usage: bun run cli link:create <target-url>");
-  }
-
-  const database = createDatabase(options.databaseUrl);
-  const redisClient = createRedisClient(options.redisUrl);
-
-  try {
-    const result = await createLink(targetUrl, {
-      linkCache: new RedisLinkCache(redisClient),
-      linkRepository: new KyselyLinkRepository(database),
-    });
-    const { link } = result;
-
-    console.log(`Created link ${link.code} -> ${link.targetUrl}`);
-    console.log(
-      `Manager code (shown once): ${formatManagerCode(link.managerCode)}`,
-    );
-
-    if (!result.cacheWritten) {
-      console.warn("Link was created, but Redis cache population failed.");
-    }
-  } finally {
-    await database.destroy();
-    redisClient.close();
+  switch (command) {
+    case "link:create":
+      await createLinkCommand(argument, options);
+      return;
+    case "link:delete":
+      if (!codePattern.test(argument)) throw new Error(usage);
+      await hardDeleteLink(argument, options);
+      return;
+    case "link:soft-delete":
+      if (!codePattern.test(argument)) throw new Error(usage);
+      await softDeleteLink(argument, options);
+      return;
+    case "cache:clear":
+      if (!codePattern.test(argument)) throw new Error(usage);
+      await clearCache(argument, options);
+      return;
+    default:
+      throw new Error(usage);
   }
 }

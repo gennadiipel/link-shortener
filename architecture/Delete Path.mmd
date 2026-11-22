@@ -1,28 +1,23 @@
 sequenceDiagram
-  Actor User
-  participant Client
-  participant Nginx
+  actor Operator
+  participant CLI
   participant Redis
-  participant NodeJS
-  participant PostgresDB
+  participant Postgres
+  participant OpenResty
 
-  User->>Client: Deletes short link abc
-  Client->>Nginx: DELETE /links/abc
-  Nginx->>NodeJS: DELETE /links/abc
-  NodeJS->>PostgresDB: DELETE link where code = abc
+  Operator->>CLI: link:delete abc1234
+  CLI->>Postgres: DELETE link by code
+  CLI->>Redis: DEL url and opens keys
+  CLI-->>Operator: Deleted or already absent
 
-  alt Link exists
-    PostgresDB-->>NodeJS: Deleted link
-    NodeJS-)Redis: DEL url:abc
-    NodeJS-)Redis: DEL opens:abc
-    NodeJS-->>Nginx: 204 No Content
-    Nginx-->>Client: 204 No Content
-    Client-->>User: Removes short link
-  else Link not found
-    PostgresDB-->>NodeJS: No matching link
-    NodeJS-)Redis: DEL url:abc
-    NodeJS-)Redis: DEL opens:abc
-    NodeJS-->>Nginx: 404 Not Found
-    Nginx-->>Client: 404 Not Found
-    Client-->>User: Shows not found state
-  end
+  Operator->>CLI: link:soft-delete abc1234
+  CLI->>Redis: GET current opens count
+  CLI->>Postgres: Set is_deleted and retain latest opens
+  CLI->>Redis: DEL url and opens keys
+  CLI-->>Operator: Soft-deleted
+
+  Operator->>CLI: cache:clear abc1234
+  CLI->>Redis: DEL url and opens keys
+  CLI-->>Operator: Cache cleared
+
+  Note over OpenResty: Hot targets expire within 60 seconds

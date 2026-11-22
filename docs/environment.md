@@ -39,6 +39,9 @@ Apply pending database migrations before running database-backed commands:
 ```sh
 bun run db:migrate
 bun run cli link:create https://example.com
+bun run cli link:delete abc1234
+bun run cli link:soft-delete abc1234
+bun run cli cache:clear abc1234
 ```
 
 The CLI is an extensible home for operational commands. The link creation
