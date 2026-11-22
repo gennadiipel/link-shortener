@@ -1,19 +1,20 @@
 import { PageLayout } from "../../components/page-layout";
 import { PagePanel } from "../../components/page-panel";
+import type { LinkDashboard } from "./api/get-dashboard";
 import { LinkDetailsCard } from "./link-details-card";
+import { ManageLinkForm } from "./manage-link-form";
 
-const dashboardLink = {
-  totalClicks: 128,
-  shortUrl: "shortly.co/abc123",
-  destinationUrl: "https://example.com/long-page",
-  editCode: "EDIT-7F2A-91C4",
-};
-
-export function LinkDashboardPage() {
+export function LinkDashboardPage({
+  link,
+  editCode,
+}: {
+  link: LinkDashboard;
+  editCode: string;
+}) {
   return (
     <PageLayout>
       <PagePanel
-        title={dashboardLink.shortUrl}
+        title={link.shortUrl}
         description="This is the dashboard for one shortened link. You’ll see its performance, destination URL, and a private edit code for future changes."
       >
         <div className="flex flex-col gap-2">
@@ -26,7 +27,13 @@ export function LinkDashboardPage() {
             to update the destination URL later.
           </p>
         </div>
-        <LinkDetailsCard {...dashboardLink} />
+        <LinkDetailsCard
+          totalClicks={link.opens}
+          shortUrl={link.shortUrl}
+          destinationUrl={link.targetUrl}
+          editCode={editCode}
+        />
+        <ManageLinkForm />
       </PagePanel>
     </PageLayout>
   );

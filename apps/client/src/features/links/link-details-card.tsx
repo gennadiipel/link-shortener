@@ -5,7 +5,7 @@ import { TextField } from "../../components/ui/text-field";
 import { PrivateEditCodeCard } from "./private-edit-code-card";
 
 type LinkDetailsCardProps = {
-  totalClicks: number;
+  totalClicks: string | number;
   shortUrl: string;
   destinationUrl: string;
   editCode: string;

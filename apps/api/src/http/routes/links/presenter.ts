@@ -14,3 +14,11 @@ export function presentCreatedLink(publicBaseUrl: string, link: Link) {
     shortUrl: createShortUrl(publicBaseUrl, link.code),
   };
 }
+
+export function presentManagedLink(publicBaseUrl: string, link: Link) {
+  return {
+    shortUrl: createShortUrl(publicBaseUrl, link.code),
+    targetUrl: link.targetUrl,
+    opens: link.opens.toString(),
+  };
+}
