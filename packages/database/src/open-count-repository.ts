@@ -23,6 +23,7 @@ export class KyselyOpenCountRepository {
       SET opens = GREATEST(link.opens, snapshot.opens)
       FROM (VALUES ${values}) AS snapshot(code, opens)
       WHERE link.code = snapshot.code
+        AND link.is_deleted = false
     `.execute(this.database);
   }
 }

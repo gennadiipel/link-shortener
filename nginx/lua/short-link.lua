@@ -52,7 +52,7 @@ else
   end
 
   target_url = result
-  local ok, target_error = targets:set(code, target_url)
+  local ok, target_error = targets:set(code, target_url, 60)
   if not ok then
     ngx.log(ngx.WARN, "Unable to populate in-process target cache for code ", code, ": ", target_error)
   end

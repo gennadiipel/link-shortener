@@ -71,7 +71,7 @@ Links will be persistently stored in Postgres and added to Redis cache. Redis ca
 
 New links are written to Postgres first, then cached as `url:{code}` and
 `opens:{code}` in Redis. OpenResty keeps hot immutable targets in a bounded
-shared-memory L1 cache. A cold L1 lookup atomically reads Redis and increments
+shared-memory L1 cache with a 60-second target lifetime. A cold L1 lookup atomically reads Redis and increments
 the Redis counter in one operation; L1 hits redirect without network I/O and
 aggregate counter increments for asynchronous Redis flushes. Every minute the
 API scans cumulative Redis counters and raises Postgres counts to the latest
@@ -93,6 +93,21 @@ link locally after starting infrastructure with:
 bun run db:migrate
 bun run cli link:create https://example.com
 ```
+
+Operational commands use the seven-character short code:
+
+```sh
+bun run cli link:delete abc1234
+bun run cli link:soft-delete abc1234
+bun run cli cache:clear abc1234
+```
+
+`link:delete` removes the Postgres row and both Redis keys. `link:soft-delete`
+keeps the row with `is_deleted = true`, captures the current Redis opens count,
+and clears Redis; deleted links return `404` after OpenResty's target entry
+expires. `cache:clear` only removes the two Redis keys. Its purge is one-time:
+pending OpenResty increments or later reads can recreate them. Redis failures
+make delete commands fail so they can be retried.
 
 `POST /api/links` accepts `{ "targetUrl": "https://example.com" }` and returns
 the new public short URL plus a manager code. Store the manager code when it is
@@ -182,33 +197,28 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  Actor User
-  participant Client
-  participant Nginx
+  actor Operator
+  participant CLI
   participant Redis
-  participant NodeJS
-  participant PostgresDB
+  participant Postgres
+  participant OpenResty
 
-  User->>Client: Deletes short link abc
-  Client->>Nginx: DELETE /links/abc
-  Nginx->>NodeJS: DELETE /links/abc
-  NodeJS->>PostgresDB: DELETE link where code = abc
+  Operator->>CLI: link:delete abc1234
+  CLI->>Postgres: DELETE link by code
+  CLI->>Redis: DEL url and opens keys
+  CLI-->>Operator: Deleted or already absent
 
-  alt Link exists
-    PostgresDB-->>NodeJS: Deleted link
-    NodeJS-)Redis: DEL url:abc
-    NodeJS-)Redis: DEL opens:abc
-    NodeJS-->>Nginx: 204 No Content
-    Nginx-->>Client: 204 No Content
-    Client-->>User: Removes short link
-  else Link not found
-    PostgresDB-->>NodeJS: No matching link
-    NodeJS-)Redis: DEL url:abc
-    NodeJS-)Redis: DEL opens:abc
-    NodeJS-->>Nginx: 404 Not Found
-    Nginx-->>Client: 404 Not Found
-    Client-->>User: Shows not found state
-  end
+  Operator->>CLI: link:soft-delete abc1234
+  CLI->>Redis: GET current opens count
+  CLI->>Postgres: Set is_deleted and retain latest opens
+  CLI->>Redis: DEL url and opens keys
+  CLI-->>Operator: Soft-deleted
+
+  Operator->>CLI: cache:clear abc1234
+  CLI->>Redis: DEL url and opens keys
+  CLI-->>Operator: Cache cleared
+
+  Note over OpenResty: Hot targets expire within 60 seconds
 ```
 
 ### Testing

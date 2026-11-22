@@ -1,7 +1,22 @@
 import { describe, expect, test } from "bun:test";
-import { RedisLinkCache } from "../src/redis-link-cache";
+import { clearLinkCache, RedisLinkCache } from "../src/redis-link-cache";
 
 describe("RedisLinkCache", () => {
+  test("clears both Redis keys for a short code", async () => {
+    const calls: string[][] = [];
+    await clearLinkCache(
+      {
+        del: async (...keys) => {
+          calls.push(keys.map(String));
+          return keys.length;
+        },
+      },
+      "abc1234",
+    );
+
+    expect(calls).toEqual([["url:abc1234", "opens:abc1234"]]);
+  });
+
   test("writes the redirect target and zeroed opens counter", async () => {
     const calls: Array<[string, string]> = [];
     const cache = new RedisLinkCache({

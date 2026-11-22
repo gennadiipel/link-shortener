@@ -11,6 +11,13 @@ export function createRedisClient(redisUrl: string): RedisClient {
   return new RedisClient(redisUrl);
 }
 
+export async function clearLinkCache(
+  client: Pick<RedisClient, "del">,
+  code: string,
+): Promise<void> {
+  await client.del(`url:${code}`, `opens:${code}`);
+}
+
 export class RedisLinkCache implements LinkCache {
   constructor(private readonly client: RedisClientLike) {}
 

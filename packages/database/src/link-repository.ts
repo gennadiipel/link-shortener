@@ -3,7 +3,7 @@ import type {
   Link,
   LinkRepository,
 } from "@lapinamk-ls/domain";
-import type { Kysely } from "kysely";
+import { type Kysely, sql } from "kysely";
 import type { DatabaseSchema } from "./schema";
 
 export class KyselyLinkRepository implements LinkRepository {
@@ -39,6 +39,7 @@ export class KyselyLinkRepository implements LinkRepository {
       .selectFrom("links")
       .select(["code", "target_url", "manager_code", "opens", "created_at"])
       .where("code", "=", code)
+      .where("is_deleted", "=", false)
       .executeTakeFirst();
 
     if (!link) {
@@ -52,5 +53,33 @@ export class KyselyLinkRepository implements LinkRepository {
       opens: BigInt(link.opens),
       targetUrl: link.target_url,
     };
+  }
+
+  async hardDelete(code: string): Promise<boolean> {
+    const deleted = await this.database
+      .deleteFrom("links")
+      .where("code", "=", code)
+      .returning("code")
+      .executeTakeFirst();
+
+    return deleted !== undefined;
+  }
+
+  async softDelete(code: string, cachedOpens?: bigint): Promise<boolean> {
+    const updates =
+      cachedOpens === undefined
+        ? { is_deleted: true }
+        : {
+            is_deleted: true,
+            opens: sql<string>`GREATEST(opens, ${cachedOpens.toString()}::bigint)`,
+          };
+    const updated = await this.database
+      .updateTable("links")
+      .set(updates)
+      .where("code", "=", code)
+      .returning("code")
+      .executeTakeFirst();
+
+    return updated !== undefined;
   }
 }
