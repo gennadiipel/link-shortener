@@ -12,6 +12,7 @@ COPY packages/domain/package.json packages/domain/package.json
 RUN bun install --frozen-lockfile
 
 COPY apps/client apps/client
+COPY packages/domain/src packages/domain/src
 
 ARG VITE_API_URL=/api
 ARG VITE_APP_BASE_PATH=/client/

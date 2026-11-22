@@ -14,7 +14,7 @@ export function Button({
     <button
       {...props}
       type={type}
-      className={`inline-flex h-13 shrink-0 items-center justify-center rounded-[10px] px-5 text-sm leading-normal font-semibold whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 aria-disabled:cursor-default ${variant === "secondary" ? "border border-outline bg-white text-ink" : "bg-primary text-white"} ${className}`}
+      className={`inline-flex h-13 shrink-0 items-center justify-center rounded-[10px] px-5 text-sm leading-normal font-semibold whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-default ${variant === "secondary" ? "border border-outline bg-white text-ink" : "bg-primary text-white"} ${className}`}
     />
   );
 }
