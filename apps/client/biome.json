@@ -1,0 +1,11 @@
+{
+  "extends": ["../../biome.json"],
+  "css": { "parser": { "tailwindDirectives": true } },
+  "overrides": [
+    {
+      "includes": ["src/assets/*.svg"],
+      "formatter": { "enabled": false },
+      "linter": { "rules": { "a11y": { "noSvgWithoutTitle": "off" } } }
+    }
+  ]
+}
