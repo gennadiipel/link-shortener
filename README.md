@@ -116,12 +116,23 @@ returned: the client saves the result in session storage and opens
 using the proxy). Both manage-link forms open this same route.
 
 `GET /api/links/<short-code>/dashboard?secretCode=<private-edit-code>` checks the credentials
-against a non-deleted Postgres link and returns `{ shortUrl, targetUrl, opens }`.
+against a Postgres link and returns `{ shortUrl, targetUrl, opens, isDeleted }`.
+Soft-deleted links retain an authenticated, read-only dashboard with copy actions
+and navigation to other links.
 The opens count is a decimal string containing the latest persisted snapshot.
 This request does not count as a link open or access Redis. Invalid credentials
 and missing links return the same `404`; dashboard navigation then returns to
 the home page. Responses use `Cache-Control: no-store` and do not include the
 private edit code. Service failures leave a retryable dashboard error.
+
+`DELETE /api/links/<short-code>?secretCode=<private-edit-code>` soft-deletes the
+link after checking the same credentials. The browser asks for confirmation,
+then refreshes the dashboard in place. The API preserves the greater persisted
+or cached click count and clears both Redis keys. A failed count read stops
+before deletion; failed cache cleanup can be retried with the same credentials,
+including after the row has been marked deleted. Successful deletion returns
+`204`; the proxy's existing target cache may continue redirecting for up to
+60 seconds. Rows and their dashboard credentials remain stored.
 
 ## Architecture diagrams
 

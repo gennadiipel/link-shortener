@@ -10,3 +10,12 @@ export function saveCreatedLink(
 ): void {
   storage.setItem(createdLinkStorageKey, JSON.stringify(link));
 }
+
+export function removeCreatedLink(
+  shortUrl: string,
+  storage: Pick<Storage, "getItem" | "removeItem"> = window.sessionStorage,
+): void {
+  const saved = storage.getItem(createdLinkStorageKey);
+  if (saved && JSON.parse(saved)?.shortUrl === shortUrl)
+    storage.removeItem(createdLinkStorageKey);
+}

@@ -4,6 +4,7 @@ export interface Link {
   managerCode: string;
   opens: bigint;
   targetUrl: string;
+  isDeleted: boolean;
 }
 
 export interface CreateLinkRecord {
@@ -14,7 +15,11 @@ export interface CreateLinkRecord {
 
 export interface LinkRepository {
   create(link: CreateLinkRecord): Promise<Link | undefined>;
-  findByCode(code: string): Promise<Link | undefined>;
+  findByCode(
+    code: string,
+    options?: { includeDeleted?: boolean },
+  ): Promise<Link | undefined>;
+  softDelete(code: string, cachedOpens?: bigint): Promise<boolean>;
 }
 
 export interface LinkCache {
@@ -22,4 +27,6 @@ export interface LinkCache {
   incrementOpens(code: string): Promise<void>;
   repair(link: Link): Promise<void>;
   set(link: Link): Promise<void>;
+  getOpens(code: string): Promise<bigint | undefined>;
+  clear(code: string): Promise<void>;
 }

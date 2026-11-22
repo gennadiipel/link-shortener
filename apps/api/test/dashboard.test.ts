@@ -8,6 +8,7 @@ const link: Link = {
   managerCode: "ABCDEFGHJKMNPQRS",
   targetUrl: "https://example.com/private-target",
   opens: 9007199254740993n,
+  isDeleted: false,
   createdAt: new Date(),
 };
 const app = createHttpApp(
@@ -21,13 +22,18 @@ const app = createHttpApp(
   }),
   {
     linkRepository: {
+      softDelete: async () => false,
       create: async () => undefined,
-      findByCode: async (code) => {
+      findByCode: async (code, options) => {
+        if (code === "deleted" && options?.includeDeleted)
+          return { ...link, code, isDeleted: true };
         if (code === "outage0") throw new Error("Database unavailable");
         return code === link.code ? link : undefined;
       },
     },
     linkCache: {
+      getOpens: async () => undefined,
+      clear: async () => {},
       getTargetUrl: async () => {
         throw new Error("Dashboard must not use Redis");
       },
@@ -46,6 +52,13 @@ const app = createHttpApp(
 afterAll(() => app.close());
 
 describe("GET /links/:code/dashboard", () => {
+  test("returns deleted dashboard data after checking the same credentials", async () => {
+    const response = await app.inject({
+      url: "/links/deleted/dashboard?secretCode=ABCD-EFGH-JKMN-PQRS",
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().isDeleted).toBe(true);
+  });
   test("returns authorized Postgres data, exact bigint counts, and no secret", async () => {
     const response = await app.inject({
       url: "/links/abc1234/dashboard?secretCode=abcd-efgh-jkmn-pqrs",
@@ -56,13 +69,14 @@ describe("GET /links/:code/dashboard", () => {
       shortUrl: "http://localhost:8080/abc1234",
       targetUrl: link.targetUrl,
       opens: "9007199254740993",
+      isDeleted: false,
     });
     expect(link.opens).toBe(9007199254740993n);
   });
   test.each([
     ["abc1234", "TUVW-XYZ2-3456-789A"],
     ["missing", "ABCD-EFGH-JKMN-PQRS"],
-    ["deleted", "ABCD-EFGH-JKMN-PQRS"],
+    ["deleted", "TUVW-XYZ2-3456-789A"],
     ["bad", "ABCD-EFGH-JKMN-PQRS"],
     ["abc1234", "invalid"],
     ["abc1234", "ABCD-EFGH-JKMN-PQRS&secretCode=invalid"],

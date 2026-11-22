@@ -20,5 +20,6 @@ export function presentManagedLink(publicBaseUrl: string, link: Link) {
     shortUrl: createShortUrl(publicBaseUrl, link.code),
     targetUrl: link.targetUrl,
     opens: link.opens.toString(),
+    isDeleted: link.isDeleted,
   };
 }

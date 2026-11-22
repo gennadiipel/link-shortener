@@ -6,6 +6,7 @@ import { createHttpApp } from "../src/http/app";
 const createdRecords: CreateLinkRecord[] = [];
 let cacheFails = false;
 const linkRepository: LinkRepository = {
+  softDelete: async () => false,
   create: async (record) => {
     createdRecords.push(record);
 
@@ -13,11 +14,14 @@ const linkRepository: LinkRepository = {
       ...record,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
       opens: 0n,
+      isDeleted: false,
     };
   },
   findByCode: async () => undefined,
 };
 const linkCache = {
+  getOpens: async () => undefined,
+  clear: async () => {},
   getTargetUrl: async () => undefined,
   incrementOpens: async () => {},
   repair: async () => {},

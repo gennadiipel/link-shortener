@@ -7,11 +7,13 @@ const link: Link = {
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   managerCode: "ABCDEFGHJKMNPQRS",
   opens: 0n,
+  isDeleted: false,
   targetUrl: "https://example.com/",
 };
 
 function repositoryWith(foundLink: Link | undefined): LinkRepository {
   return {
+    softDelete: async () => false,
     create: async () => undefined,
     findByCode: async () => foundLink,
   };
@@ -19,6 +21,8 @@ function repositoryWith(foundLink: Link | undefined): LinkRepository {
 
 function cacheWith(overrides: Partial<LinkCache> = {}): LinkCache {
   return {
+    getOpens: async () => undefined,
+    clear: async () => {},
     getTargetUrl: async () => undefined,
     incrementOpens: async () => {},
     repair: async () => {},
@@ -28,13 +32,31 @@ function cacheWith(overrides: Partial<LinkCache> = {}): LinkCache {
 }
 
 describe("resolveLink", () => {
+  test("never repairs or redirects a deleted database row", async () => {
+    const result = await resolveLink(link.code, {
+      linkRepository: repositoryWith({ ...link, isDeleted: true }),
+      linkCache: cacheWith({
+        repair: async () => {
+          throw new Error("Deleted targets must not be cached");
+        },
+        incrementOpens: async () => {
+          throw new Error("Deleted targets must not be counted");
+        },
+      }),
+    });
+    expect(result.source).toBe("not-found");
+    expect(result.targetUrl).toBeUndefined();
+  });
   test("returns a Redis hit without querying the database", async () => {
     let databaseQueried = false;
     const result = await resolveLink("abc1234", {
       linkCache: cacheWith({
+        getOpens: async () => undefined,
+        clear: async () => {},
         getTargetUrl: async () => "https://cached.example/",
       }),
       linkRepository: {
+        softDelete: async () => false,
         create: async () => undefined,
         findByCode: async () => {
           databaseQueried = true;
